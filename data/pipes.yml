@@ -3,16 +3,9 @@
   routing_keys:
     - "*customer.subscription*"
 
-- topic:        "customer.created"
+- topic:        "customer_created"
   routing_keys:
     - "*customer.created"
-
-- topic:        "from_key_2_and_q"
-  exchange:     "*es*"
-  routing_keys:
-    - "*key_2"
-  routed_queues:
-    - "*q*"
 
 - topic:        "default"
   routing_keys:

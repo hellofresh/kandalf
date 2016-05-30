@@ -1,0 +1,28 @@
+version: "2"
+services:
+  bridge:
+    build:          .
+    container_name: bridge
+    command:        ./kandalf -c data/config.yml -p data/pipes.yml
+    volumes:
+      - "./out:/app"
+      - "./data:/app/data"
+    links:
+      - kafka
+      - redis
+      - rmq
+
+  kafka:
+    image:          spotify/kafka
+    environment:
+      TOPICS:       "customer_subscription,customer_created,default"
+
+  redis:
+    image:          redis
+
+  rmq:
+    image:          rabbitmq:3-management
+    volumes:
+      - "./data/rmq/:/etc/rabbitmq/"
+    ports:
+      - "15672:15672"

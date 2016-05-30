@@ -5,8 +5,7 @@ OUTDIR=$(CURDIR)/out
 VERSION=`$(OUTDIR)/$(APP_NAME) -v | cut -d ' ' -f 3`
 
 $(OUTDIR)/$(APP_NAME): $(CURDIR)/src/main.go
-	go build -o $(OUTDIR)/$(APP_NAME) $(CURDIR)/src/main.go
-	chmod 0755 $(OUTDIR)/$(APP_NAME)
+	go build -o $(OUTDIR)/$(APP_NAME) -ldflags="-s -w" $(CURDIR)/src/main.go
 
 dep-install:
 	go get github.com/bshuster-repo/logrus-logstash-hook
@@ -21,6 +20,27 @@ dep-update:
 	go get -u github.com/Sirupsen/logrus
 	go get -u github.com/urfave/cli
 	go get -u gopkg.in/yaml.v2
+
+docker-build:
+	docker run --rm -it \
+		-v $(GOPATH):/gopath \
+		-v $(OUTDIR):/out \
+		-v $(CURDIR)/src:/app \
+		-e "GOPATH=/gopath" \
+		-w /app golang:alpine \
+		sh -c 'go build -o /out/$(APP_NAME) -ldflags="-s -w" main.go'
+
+docker-run:
+	docker-compose up bridge
+
+docker-up-env:
+	docker-compose stop
+	docker-compose rm --all --force
+	docker-compose up -d kafka
+	docker-compose up -d redis
+	docker-compose up -d rmq
+	sleep 2
+	docker-compose exec rmq rabbitmqctl trace_on
 
 fmt:
 	gofmt -s=true -w $(CURDIR)/src

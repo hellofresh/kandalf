@@ -2,18 +2,25 @@
 log:
   level:                "info"
   #logstash:
-    # "udp" or "tcp" supported
-    #protocol:             "udp"
-    # Address should be in "<host>:<port>" format
-    #address:              "logstash:888"
+  #  # "udp" or "tcp" supported
+  #  protocol:             "udp"
+  #  # In "<host>:<port>" format
+  #  address:              "elk:1111"
 kafka_brokers:
   # Docker
   - "kafka:9092"
 rabbitmq_hosts:
   # Docker
   - "amqp://rmq"
-redis:
-  host:                 "redis"
 worker:
   max_queue_size:       10
   sleep_timeout:        3
+queue:
+  # In seconds
+  flush_timeout:        5
+  max_size:             10
+  redis:
+    # In "<host>:<port>" format
+    address:            "redis:6379"
+    key_name:           "failed_messages"
+    flush_timeout:      10

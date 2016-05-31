@@ -1,6 +1,6 @@
 export GOPATH=$(CURDIR)/.go
 
-APP_NAME = kandalf
+APP_NAME=kandalf
 OUTDIR=$(CURDIR)/out
 VERSION=`$(OUTDIR)/$(APP_NAME) -v | cut -d ' ' -f 3`
 
@@ -11,15 +11,10 @@ dep-install:
 	go get github.com/bshuster-repo/logrus-logstash-hook
 	go get github.com/olebedev/config
 	go get github.com/Sirupsen/logrus
+	go get github.com/streadway/amqp
 	go get github.com/urfave/cli
+	go get gopkg.in/redis.v3
 	go get gopkg.in/yaml.v2
-
-dep-update:
-	go get -u github.com/bshuster-repo/logrus-logstash-hook
-	go get -u github.com/olebedev/config
-	go get -u github.com/Sirupsen/logrus
-	go get -u github.com/urfave/cli
-	go get -u gopkg.in/yaml.v2
 
 docker-build:
 	docker run --rm -it \
@@ -28,7 +23,7 @@ docker-build:
 		-v $(CURDIR)/src:/app \
 		-e "GOPATH=/gopath" \
 		-w /app golang:alpine \
-		sh -c 'go build -o /out/$(APP_NAME) -ldflags="-s -w" main.go'
+		sh -c 'go build -o /out/$(APP_NAME)-alpine -ldflags="-s -w" main.go'
 
 docker-run:
 	docker-compose up bridge

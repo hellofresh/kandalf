@@ -3,7 +3,7 @@ services:
   bridge:
     build:          .
     container_name: bridge
-    command:        ./kandalf -c data/config.yml -p data/pipes.yml
+    command:        ./kandalf-alpine -c data/config.yml -p data/pipes.yml
     volumes:
       - "./out:/app"
       - "./data:/app/data"

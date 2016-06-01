@@ -2,6 +2,7 @@ package workers
 
 import (
 	"encoding/json"
+	"fmt"
 	"sync"
 	"time"
 
@@ -11,33 +12,27 @@ import (
 	"../logger"
 )
 
-type cbHandleMessage func(Message) error
-
-type Message struct {
+type internalMessage struct {
 	Exchange   string          `json:"exchange"`
 	RoutingKey string          `json:"routing_key"`
 	Body       json.RawMessage `json:"body"`
 }
 
-type Queue struct {
+type internalQueue struct {
 	flushTimeout   time.Duration
-	handleMessage  cbHandleMessage
 	isWorking      bool
 	maxSize        int
-	messages       []Message
+	messages       []internalMessage
 	mutex          *sync.Mutex
+	producer       *internalProducer
 	rd             *redis.Client
 	rdFlushTimeout time.Duration
 	rdKeyName      string
 }
 
-func NewQueue(handler cbHandleMessage) (*Queue, error) {
+// Returns new instance of queue
+func newInternalQueue() (*internalQueue, error) {
 	var err error
-
-	rdKeyName, err := config.Instance().String("queue.redis.key_name")
-	if err != nil {
-		return nil, err
-	}
 
 	rdAddr, err := config.Instance().String("queue.redis.address")
 	if err != nil {
@@ -53,35 +48,25 @@ func NewQueue(handler cbHandleMessage) (*Queue, error) {
 		return nil, err
 	}
 
-	rdFlushTimeout, err := config.Instance().Int("queue.redis.flush_timeout")
+	producer, err := newInternalProducer()
 	if err != nil {
-		rdFlushTimeout = 10
+		return nil, fmt.Errorf("An error occured while instantiating producer: %v", err)
 	}
 
-	flushTimeout, err := config.Instance().Int("queue.flush_timeout")
-	if err != nil {
-		flushTimeout = 5
-	}
-
-	maxSize, err := config.Instance().Int("queue.max_size")
-	if err != nil {
-		maxSize = 10
-	}
-
-	return &Queue{
-		flushTimeout:   flushTimeout * time.Second,
-		handleMessage:  handler,
-		maxSize:        maxSize,
-		messages:       make([]Message, 0),
+	return &internalQueue{
+		flushTimeout:   time.Duration(config.Instance().UInt("queue.flush_timeout", 5)) * time.Second,
+		maxSize:        config.Instance().UInt("queue.max_size", 10),
+		messages:       make([]internalMessage, 0),
 		mutex:          &sync.Mutex{},
+		producer:       producer,
 		rd:             rdClient,
-		rdFlushTimeout: rdFlushTimeout * time.Second,
-		rdKeyName:      rdKeyName,
+		rdFlushTimeout: time.Duration(config.Instance().UInt("queue.redis.flush_timeout", 10)) * time.Second,
+		rdKeyName:      config.Instance().UString("queue.redis.key_name", "failed_messages"),
 	}, nil
 }
 
 // Main working cycle
-func (q *Queue) Run(wg *sync.WaitGroup, die chan bool) {
+func (q *internalQueue) run(wg *sync.WaitGroup, die chan bool) {
 	defer wg.Done()
 
 	q.isWorking = true
@@ -111,33 +96,34 @@ func (q *Queue) Run(wg *sync.WaitGroup, die chan bool) {
 }
 
 // Adds message to the internal queue which will be flushed to kafka later
-func (q *Queue) Add(msg Message) {
+func (q *internalQueue) add(msg internalMessage) {
 	q.mutex.Lock()
 	defer q.mutex.Unlock()
 
-	append(q.messages, msg)
+	q.messages = append(q.messages, msg)
 }
 
 // Tries to send messages to the kafka
 // If message failed, it will be stored in redis
-func (q *Queue) handleMessages() {
+func (q *internalQueue) handleMessages() {
 	q.mutex.Lock()
 	defer q.mutex.Unlock()
 
 	var (
 		err            error
-		failedMessages []Message = make([]Message, 0)
+		failedMessages []internalMessage = make([]internalMessage, 0)
 	)
 
-	for msg := range q.messages {
-		err = q.handleMessage(msg)
+	for _, msg := range q.messages {
+		err = q.producer.handleMessage(msg)
 		if err == nil {
 			continue
 		}
 
+		err = q.storeInRedis(msg)
+
 		// If it is not possible to store message even in redis,
 		// we'll put the message into memory and process it later
-		err = q.storeInRedis(msg)
 		if err != nil {
 			failedMessages = append(failedMessages, msg)
 		}
@@ -147,21 +133,21 @@ func (q *Queue) handleMessages() {
 }
 
 // Stores the failed message in redis
-func (q *Queue) storeInRedis(msg Message) error {
+func (q *internalQueue) storeInRedis(msg internalMessage) error {
 	strMsg, err := json.Marshal(msg)
 	if err != nil {
 		return err
 	}
 
-	return q.rd.LPush(q.rdKeyName, strMsg).Err()
+	return q.rd.LPush(q.rdKeyName, string(strMsg)).Err()
 }
 
 // Periodically move messages from Redis back to the main queue
-func (q *Queue) flushRedis() {
+func (q *internalQueue) flushRedis() {
 	var (
 		err      error
 		bytesMsg []byte
-		msg      Message
+		msg      internalMessage
 	)
 
 	for q.isWorking {
@@ -179,7 +165,7 @@ func (q *Queue) flushRedis() {
 				continue
 			}
 
-			q.Add(msg)
+			q.add(msg)
 		}
 
 		time.Sleep(q.rdFlushTimeout)

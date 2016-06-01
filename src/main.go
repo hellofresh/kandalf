@@ -11,6 +11,7 @@ import (
 	"./kandalf/config"
 	"./kandalf/logger"
 	"./kandalf/pipes"
+	"./kandalf/workers"
 )
 
 // Instantiates new application and launches it
@@ -18,7 +19,7 @@ func main() {
 	app := cli.NewApp()
 
 	app.Name = "kandalf"
-	app.Usage = "Daemon that reads all messages from RabbitMQ and put them to kafka"
+	app.Usage = "Daemon that reads all messages from RabbitMQ and puts them to kafka"
 	app.Version = "0.0.1"
 	app.Authors = []cli.Author{
 		{
@@ -26,7 +27,6 @@ func main() {
 			Email: "endeveit@gmail.com",
 		},
 	}
-	app.Action = actionRun
 	app.Flags = []cli.Flag{
 		cli.StringFlag{
 			Name:  "config, c",
@@ -39,18 +39,23 @@ func main() {
 			Usage: "Path to file with pipes rules",
 		},
 	}
+	app.Action = actionRun
 
 	app.Run(os.Args)
 }
 
 // Runs the application
-func actionRun(ctx *cli.Context) error {
+func actionRun(ctx *cli.Context) (err error) {
 	var (
 		wg      *sync.WaitGroup = &sync.WaitGroup{}
 		die     chan bool       = make(chan bool, 1)
 		pConfig string          = ctx.String("config")
 		pPipes  string          = ctx.String("pipes")
+		worker  *workers.Worker
 	)
+
+	doReload(pConfig, pPipes)
+	worker = workers.NewWorker()
 
 	ch := make(chan os.Signal, 1)
 	signal.Notify(ch, os.Interrupt, syscall.SIGHUP)
@@ -64,12 +69,14 @@ func actionRun(ctx *cli.Context) error {
 				close(die)
 			case syscall.SIGHUP:
 				doReload(pConfig, pPipes)
+				worker.Reload()
 			}
 		}
 	}()
 
-	doReload(pConfig, pPipes)
-
+	// Here be dragons
+	wg.Add(1)
+	go worker.Run(wg, die)
 	wg.Wait()
 
 	return nil

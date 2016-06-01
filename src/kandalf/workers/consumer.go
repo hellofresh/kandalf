@@ -13,25 +13,26 @@ var (
 	routingKey   string = "publish.*"
 )
 
-type Consumer struct {
+type internalConsumer struct {
 	con   *amqp.Connection
-	queue *Queue
+	queue *internalQueue
 }
 
-func NewConsumer(url string, queue *Queue) (*Consumer, error) {
-	c, err := amqp.Dial(url)
+// Returns new instance of RabbitMQ consumer
+func newInternalConsumer(url string, queue *internalQueue) (*internalConsumer, error) {
+	con, err := amqp.Dial(url)
 	if err != nil {
 		return nil, err
 	}
 
-	return &Consumer{
-		con:   c,
+	return &internalConsumer{
+		con:   con,
 		queue: queue,
 	}, nil
 }
 
 // Main working cycle
-func (c *Consumer) Run(wg *sync.WaitGroup, die chan bool) {
+func (c *internalConsumer) run(wg *sync.WaitGroup, die chan bool) {
 	defer wg.Done()
 
 	ch, err := c.con.Channel()
@@ -106,8 +107,8 @@ func (c *Consumer) Run(wg *sync.WaitGroup, die chan bool) {
 }
 
 // Stores the message in the queue
-func (c *Consumer) storeMessage(m amqp.Delivery) {
-	c.queue.Add(Message{
+func (c *internalConsumer) storeMessage(m amqp.Delivery) {
+	c.queue.add(internalMessage{
 		Exchange:   m.Exchange,
 		RoutingKey: m.RoutingKey,
 		Body:       m.Body,

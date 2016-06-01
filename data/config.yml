@@ -6,12 +6,15 @@ log:
   #  protocol:             "udp"
   #  # In "<host>:<port>" format
   #  address:              "elk:1111"
-kafka_brokers:
-  # Docker
-  - "kafka:9092"
-rabbitmq_hosts:
-  # Docker
-  - "amqp://rmq"
+kafka:
+  brokers:
+    # Docker
+    - "kafka:9092"
+  retry_max:            5
+rabbitmq:
+  urls:
+    # Docker
+    - "amqp://rmq"
 worker:
   max_queue_size:       10
   sleep_timeout:        3

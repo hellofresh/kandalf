@@ -14,6 +14,7 @@ dep-install:
 	go get github.com/streadway/amqp
 	go get github.com/urfave/cli
 	go get gopkg.in/redis.v3
+	go get gopkg.in/Shopify/sarama.v1
 	go get gopkg.in/yaml.v2
 
 docker-build:

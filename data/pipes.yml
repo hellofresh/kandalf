@@ -1,12 +1,28 @@
 ---
+- topic:        "us_customer_subscription"
+  routing_key:  "us_customer.subscription*"
+  priority:     3
+
 - topic:        "customer_subscription"
-  routing_keys:
-    - "*customer.subscription*"
+  routing_key:  "*customer.subscription*"
+  priority:     2
 
 - topic:        "customer_created"
-  routing_keys:
-    - "*customer.created"
+  routing_key:  "*customer.created"
+  priority:     2
 
+# Default topic for any message
 - topic:        "default"
-  routing_keys:
-    - "*"
+  routing_key:  "*"
+  exchange:     "*"
+  priority:     0
+
+# Default topic for message with routing key and without exchange name
+- topic:        "default"
+  routing_key:  "*"
+  priority:     0
+
+# Default topic for message with exchange name and without routing key
+- topic:        "default"
+  exchange:     "*"
+  priority:     0

@@ -67,7 +67,7 @@ func getLogstashHook(c *config.Config) (hook *ls.Hook, err error) {
 		return nil, err
 	}
 
-	hook, err = ls.NewHook(protocol, address)
+	hook, err = ls.NewHook(protocol, address, "kandalf")
 	if err != nil {
 		log.Fatalf("Unable to instantiate logstash hook: %v", err)
 	}

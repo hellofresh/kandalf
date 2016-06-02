@@ -13,9 +13,10 @@ import (
 )
 
 type internalMessage struct {
-	Exchange   string          `json:"exchange"`
-	RoutingKey string          `json:"routing_key"`
-	Body       json.RawMessage `json:"body"`
+	ExchangeName string          `json:"exchange_name"`
+	RoutedQueues []string        `json:"routed_queues"`
+	RoutingKeys  []string        `json:"routing_keys"`
+	Body         json.RawMessage `json:"body"`
 }
 
 type internalQueue struct {
@@ -101,6 +102,8 @@ func (q *internalQueue) add(msg internalMessage) {
 	defer q.mutex.Unlock()
 
 	q.messages = append(q.messages, msg)
+
+	logger.Instance().Debug("Added message to internal queue")
 }
 
 // Tries to send messages to the kafka
@@ -118,6 +121,10 @@ func (q *internalQueue) handleMessages() {
 		err = q.producer.handleMessage(msg)
 		if err == nil {
 			continue
+		} else {
+			logger.Instance().
+				WithError(err).
+				Warning("Unable to send message to kafka")
 		}
 
 		err = q.storeInRedis(msg)
@@ -126,6 +133,12 @@ func (q *internalQueue) handleMessages() {
 		// we'll put the message into memory and process it later
 		if err != nil {
 			failedMessages = append(failedMessages, msg)
+
+			logger.Instance().
+				WithError(err).
+				Warning("Unable to store message in Redis")
+		} else {
+			logger.Instance().Debug("Successfully stored message in Redis")
 		}
 	}
 

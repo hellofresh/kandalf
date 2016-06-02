@@ -2,6 +2,7 @@ package workers
 
 import (
 	"sync"
+	"time"
 
 	"github.com/streadway/amqp"
 
@@ -44,7 +45,7 @@ func (c *internalConsumer) run(wg *sync.WaitGroup, die chan bool) {
 		return
 	}
 
-	err = ch.ExchangeDeclare(exchangeName, "topic", true, true, true, false, nil)
+	err = ch.ExchangeDeclare(exchangeName, "topic", true, false, true, false, nil)
 	if err != nil {
 		logger.Instance().
 			WithError(err).
@@ -80,19 +81,13 @@ func (c *internalConsumer) run(wg *sync.WaitGroup, die chan bool) {
 		return
 	}
 
+	forever := make(chan bool)
+
 	// Now run the consumer
 	go func() {
 		var err error
 
 		for m := range msgs {
-			select {
-			case <-die:
-				// Before exiting coroutine, don't forget to store the message in queue
-				c.storeMessage(m)
-				return
-			default:
-			}
-
 			c.storeMessage(m)
 		}
 
@@ -104,13 +99,50 @@ func (c *internalConsumer) run(wg *sync.WaitGroup, die chan bool) {
 				Warning("An error occurred while closing connection to RabbitMQ")
 		}
 	}()
+
+	// And look into the infinite channel for interrupt message
+	go func() {
+		for {
+			select {
+			case <-die:
+				forever <- true
+				return
+			default:
+			}
+
+			time.Sleep(infiniteCycleTimeout)
+		}
+	}()
+
+	<-forever
+
+	logger.Instance().
+		Debug("Will stop consuming according to the signal came from Worker")
 }
 
-// Stores the message in the queue
+// Build the internal message and stores it in the queue
 func (c *internalConsumer) storeMessage(m amqp.Delivery) {
-	c.queue.add(internalMessage{
-		Exchange:   m.Exchange,
-		RoutingKey: m.RoutingKey,
-		Body:       m.Body,
-	})
+	msg := internalMessage{
+		Body: m.Body,
+	}
+
+	if exchangeName, ok := m.Headers["exchange_name"]; ok {
+		msg.ExchangeName = exchangeName.(string)
+	}
+
+	if queues, ok := m.Headers["routed_queues"]; ok {
+		for _, queue := range queues.([]interface{}) {
+			msg.RoutedQueues = append(msg.RoutedQueues, queue.(string))
+		}
+	}
+
+	if keys, ok := m.Headers["routing_keys"]; ok {
+		for _, key := range keys.([]interface{}) {
+			msg.RoutingKeys = append(msg.RoutingKeys, key.(string))
+		}
+	}
+
+	logger.Instance().Debug(msg)
+
+	c.queue.add(msg)
 }

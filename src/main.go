@@ -68,6 +68,7 @@ func actionRun(ctx *cli.Context) (err error) {
 				logger.Instance().Info("Got interrupt signal. Will stop the work")
 				close(die)
 			case syscall.SIGHUP:
+				logger.Instance().Info("Got SIGHUP. Will reload config and pipes")
 				doReload(pConfig, pPipes)
 				worker.Reload()
 			}

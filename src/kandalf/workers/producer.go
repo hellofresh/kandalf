@@ -2,6 +2,7 @@ package workers
 
 import (
 	"path"
+	"sort"
 
 	log "github.com/Sirupsen/logrus"
 	"gopkg.in/Shopify/sarama.v1"
@@ -46,50 +47,110 @@ func newInternalProducer() (*internalProducer, error) {
 
 // Sends message to the kafka
 func (p *internalProducer) handleMessage(msg internalMessage) (err error) {
-	var (
-		msgHasExchange   bool = len(msg.Exchange) > 0
-		msgHasRoutingKey bool = len(msg.RoutingKey) > 0
-		pipe             pipes.Pipe
-		pipeFound        bool
-		exchangeFound    bool
-		routingKeyFound  bool
-	)
-
-	// That's what this is all about:
-	for _, p := range p.pipesList {
-		pipeFound = false
-
-		if (msgHasExchange && msgHasRoutingKey) && (p.HasExchange && p.HasRoutingKey) {
-			exchangeFound, _ = path.Match(p.Exchange, msg.Exchange)
-			routingKeyFound, _ = path.Match(p.RoutingKey, msg.RoutingKey)
-			pipeFound = exchangeFound && routingKeyFound
-		} else if (msgHasExchange && !msgHasRoutingKey) && p.HasExchange {
-			pipeFound, _ = path.Match(p.Exchange, msg.Exchange)
-		} else if (msgHasRoutingKey && !msgHasExchange) && p.HasRoutingKey {
-			pipeFound, _ = path.Match(p.RoutingKey, msg.RoutingKey)
-		}
-
-		if pipeFound {
-			pipe = p
-			break
-		}
+	topic := getTopic(msg, p.pipesList)
+	fields := log.Fields{
+		"exchange_name": msg.ExchangeName,
+		"routed_queues": msg.RoutedQueues,
+		"routing_keys":  msg.RoutingKeys,
 	}
 
-	if pipeFound {
+	if len(topic) > 0 {
 		_, _, err = p.client.SendMessage(&sarama.ProducerMessage{
-			Topic: pipe.Topic,
+			Topic: topic,
 			Value: sarama.ByteEncoder(msg.Body),
 		})
+
+		if err == nil {
+			fields["topic"] = topic
+
+			logger.Instance().
+				WithFields(fields).
+				Debug("Successfully sent message to kafka")
+		} else {
+			logger.Instance().
+				WithFields(fields).
+				Debug("Un error occurred while sending message to kafka")
+		}
 	} else {
 		err = nil
 
 		logger.Instance().
-			WithFields(log.Fields{
-				"exchange":    msg.Exchange,
-				"routing_key": msg.RoutingKey,
-			}).
-			Debug("Unable to find Kafka topic for message")
+			WithFields(fields).
+			Warning("Unable to find Kafka topic for message")
 	}
 
 	return err
+}
+
+// That's what this is all about.
+// Find the topic for a message, based on rules in pipes
+func getTopic(msg internalMessage, pipesList []pipes.Pipe) string {
+	var (
+		scores         map[int]int = make(map[int]int)
+		pipeMatched    bool
+		pipeFound      bool
+		foundedPipeIdx int
+		nbScores       int
+	)
+
+	for position, pipe := range pipesList {
+		scores[position] = 0
+		nbScores++
+
+		if len(msg.ExchangeName) > 0 && pipe.HasExchangeName {
+			pipeMatched, _ = path.Match(pipe.ExchangeName, msg.ExchangeName)
+			if pipeMatched {
+				scores[position]++
+			}
+		}
+
+		if len(msg.RoutedQueues) > 0 && pipe.HasRoutedQueue && isAllKeysMatchPattern(msg.RoutedQueues, pipe.RoutedQueue) {
+			scores[position]++
+		}
+
+		if len(msg.RoutingKeys) > 0 && pipe.HasRoutingKey && isAllKeysMatchPattern(msg.RoutingKeys, pipe.RoutingKey) {
+			scores[position]++
+		}
+
+		// If score is 3, than pipe satisfies to all message's fields
+		if scores[position] == 3 {
+			pipeFound = true
+			foundedPipeIdx = position
+			break
+		}
+	}
+
+	if !pipeFound && nbScores > 0 {
+		var positions []int
+
+		for position := range scores {
+			positions = append(positions, position)
+		}
+
+		// Sort scores descending
+		sort.Sort(sort.Reverse(sort.IntSlice(positions)))
+
+		pipeFound = true
+		foundedPipeIdx = positions[0]
+	}
+
+	if pipeFound {
+		return pipesList[foundedPipeIdx].Topic
+	}
+
+	return ""
+}
+
+// Checks if all strings match the pattern
+func isAllKeysMatchPattern(keys []string, pattern string) bool {
+	var matched bool
+
+	for _, key := range keys {
+		matched, _ = path.Match(pattern, key)
+		if !matched {
+			return false
+		}
+	}
+
+	return true
 }

@@ -10,14 +10,13 @@ kafka:
   brokers:
     # Docker
     - "kafka:9092"
+  # The total number of times to retry sending a message.
+  # Should be similar to the `message.send.max.retries` setting of the JVM producer.
   retry_max:            5
 rabbitmq:
   urls:
     # Docker
     - "amqp://rmq"
-worker:
-  max_queue_size:       10
-  sleep_timeout:        3
 queue:
   # In seconds
   flush_timeout:        5
@@ -25,5 +24,7 @@ queue:
   redis:
     # In "<host>:<port>" format
     address:            "redis:6379"
+    # The name of the queue with failed messages
     key_name:           "failed_messages"
+    # The pause between attempts to flush content of "queue.redis.key_name" to kafka
     flush_timeout:      10

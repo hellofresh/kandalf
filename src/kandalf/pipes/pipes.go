@@ -10,12 +10,15 @@ import (
 )
 
 type Pipe struct {
-	Topic         string `yaml:"topic"`
-	Exchange      string `yaml:"exchange,omitempty"`
-	RoutingKey    string `yaml:"routing_key,omitempty"`
-	Priority      int    `yaml:"priority,omitempty"`
-	HasExchange   bool
-	HasRoutingKey bool
+	Topic        string `yaml:"topic"`
+	ExchangeName string `yaml:"exchange_name,omitempty"`
+	RoutedQueue  string `yaml:"routed_queue,omitempty"`
+	RoutingKey   string `yaml:"routing_key,omitempty"`
+	Priority     int    `yaml:"priority,omitempty"`
+
+	HasExchangeName bool
+	HasRoutedQueue  bool
+	HasRoutingKey   bool
 }
 
 type tPipes []Pipe
@@ -49,9 +52,10 @@ func getPipes(path string) (pipes tPipes) {
 		log.Fatalf("Unable to parse pipes: %v", err)
 	}
 
-	for i, pipe := range pipes {
-		pipes[i].HasExchange = len(pipe.Exchange) > 0
-		pipes[i].HasRoutingKey = len(pipe.RoutingKey) > 0
+	for _, pipe := range pipes {
+		pipe.HasExchangeName = len(pipe.ExchangeName) > 0
+		pipe.HasRoutedQueue = len(pipe.RoutedQueue) > 0
+		pipe.HasRoutingKey = len(pipe.RoutingKey) > 0
 	}
 
 	sort.Sort(pipes)

@@ -14,10 +14,11 @@ import (
 var infiniteCycleTimeout time.Duration = 2 * time.Second
 
 type Worker struct {
-	die         chan bool
-	wg          *sync.WaitGroup
-	forceReload bool
-	isWorking   bool
+	die       chan bool
+	reload    chan bool
+	mutex     *sync.Mutex
+	wg        *sync.WaitGroup
+	isWorking bool
 }
 
 type internalWorker interface {
@@ -27,8 +28,10 @@ type internalWorker interface {
 // Returns new instance of worker
 func NewWorker() *Worker {
 	return &Worker{
-		die: make(chan bool, 1),
-		wg:  &sync.WaitGroup{},
+		die:    make(chan bool, 1),
+		reload: make(chan bool),
+		mutex:  &sync.Mutex{},
+		wg:     &sync.WaitGroup{},
 	}
 }
 
@@ -55,7 +58,7 @@ func (w *Worker) Run(wgMain *sync.WaitGroup, dieMain chan bool) {
 
 // Reloads the worker
 func (w *Worker) Reload() {
-	w.forceReload = true
+	w.reload <- true
 }
 
 // Launches the internal workers and executes them infinitely
@@ -82,14 +85,18 @@ func (w *Worker) doRun() {
 
 		go func() {
 			for {
-				if w.forceReload {
+				select {
+				case <-w.reload:
 					logger.Instance().Info("Caught reload signal. Will stop all workers")
 
 					close(die)
-				} else {
-					// Prevent CPU overload
-					time.Sleep(infiniteCycleTimeout)
+
+					return
+				default:
 				}
+
+				// Prevent CPU overload
+				time.Sleep(infiniteCycleTimeout)
 			}
 		}()
 
@@ -98,9 +105,6 @@ func (w *Worker) doRun() {
 			go w.run(wg, die)
 		}
 		wg.Wait()
-
-		// Restore force reload flag
-		w.forceReload = false
 	}
 }
 
@@ -125,6 +129,11 @@ func (w *Worker) getWorkers() (workers []internalWorker, err error) {
 				Warning("Unable to create consumer")
 		} else {
 			workers = append(workers, c)
+
+			logger.Instance().
+				WithError(err).
+				WithField("url", url).
+				Debug("Created a new consumer")
 		}
 	}
 

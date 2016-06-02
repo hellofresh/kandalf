@@ -1,11 +1,11 @@
 ---
 log:
   level:                "info"
-  #logstash:
-  #  # "udp" or "tcp" supported
-  #  protocol:             "udp"
-  #  # In "<host>:<port>" format
-  #  address:              "elk:1111"
+  logstash:
+    # "udp" or "tcp" supported
+    protocol:           "tcp"
+    # In "<host>:<port>" format
+    address:            "logstash:5000"
 kafka:
   brokers:
     # Docker

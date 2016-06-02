@@ -1,2 +1,2 @@
-FROM alpine:latest
+FROM buildpack-deps:latest
 WORKDIR /app

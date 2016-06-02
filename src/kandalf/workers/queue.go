@@ -6,6 +6,7 @@ import (
 	"sync"
 	"time"
 
+	log "github.com/Sirupsen/logrus"
 	"gopkg.in/redis.v3"
 
 	"../config"
@@ -103,7 +104,13 @@ func (q *internalQueue) add(msg internalMessage) {
 
 	q.messages = append(q.messages, msg)
 
-	logger.Instance().Debug("Added message to internal queue")
+	logger.Instance().
+		WithFields(log.Fields{
+			"exchange_name": msg.ExchangeName,
+			"routed_queues": msg.RoutedQueues,
+			"routing_keys":  msg.RoutingKeys,
+		}).
+		Debug("Added message to internal queue")
 }
 
 // Tries to send messages to the kafka

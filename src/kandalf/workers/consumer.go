@@ -142,7 +142,5 @@ func (c *internalConsumer) storeMessage(m amqp.Delivery) {
 		}
 	}
 
-	logger.Instance().Debug(msg)
-
 	c.queue.add(msg)
 }

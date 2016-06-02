@@ -23,8 +23,8 @@ docker-build:
 		-v $(OUTDIR):/out \
 		-v $(CURDIR)/src:/app \
 		-e "GOPATH=/gopath" \
-		-w /app golang:alpine \
-		sh -c 'go build -o /out/$(APP_NAME)-alpine -ldflags="-s -w" main.go'
+		-w /app golang:latest \
+		sh -c 'go build -o /out/$(APP_NAME)-linux-amd64 -ldflags="-s -w" main.go'
 
 docker-run:
 	docker-compose up bridge
@@ -32,7 +32,10 @@ docker-run:
 docker-up-env:
 	docker-compose stop
 	docker-compose rm --all --force
+	docker-compose up -d elasticsearch
 	docker-compose up -d kafka
+	docker-compose up -d kibana
+	docker-compose up -d logstash
 	docker-compose up -d redis
 	docker-compose up -d rmq
 	sleep 2

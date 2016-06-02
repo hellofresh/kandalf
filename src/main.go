@@ -20,7 +20,7 @@ func main() {
 
 	app.Name = "kandalf"
 	app.Usage = "Daemon that reads all messages from RabbitMQ and puts them to kafka"
-	app.Version = "0.0.1"
+	app.Version = "%app.version%"
 	app.Authors = []cli.Author{
 		{
 			Name:  "Nikita Vershinin",

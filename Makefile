@@ -3,9 +3,30 @@ export GOPATH=$(CURDIR)/.go
 APP_NAME=kandalf
 OUTDIR=$(CURDIR)/out
 VERSION=`$(OUTDIR)/$(APP_NAME) -v | cut -d ' ' -f 3`
+DEBIAN_TMP=$(OUTDIR)/deb
 
 $(OUTDIR)/$(APP_NAME): $(CURDIR)/src/main.go
 	go build -o $(OUTDIR)/$(APP_NAME) -ldflags="-s -w" $(CURDIR)/src/main.go
+
+deb: $(OUTDIR)/$(APP_NAME)
+	mkdir $(DEBIAN_TMP)
+	mkdir -p $(DEBIAN_TMP)/etc/$(APP_NAME)
+	mkdir -p $(DEBIAN_TMP)/usr/local/bin
+	install -m 644 $(CURDIR)/data/config.yml $(DEBIAN_TMP)/etc/$(APP_NAME)/config.yml
+	install -m 644 $(CURDIR)/data/pipes.yml $(DEBIAN_TMP)/etc/$(APP_NAME)/pipes.yml
+	install -m 755 $(OUTDIR)/$(APP_NAME) $(DEBIAN_TMP)/usr/local/bin
+	fpm -n $(APP_NAME) \
+		-v $(VERSION) \
+		-t deb \
+		-s dir \
+		-C $(DEBIAN_TMP) \
+		-p $(OUTDIR) \
+		--config-files   /etc/$(APP_NAME) \
+		--after-install  $(CURDIR)/debian/postinst \
+		--after-remove   $(CURDIR)/debian/postrm \
+		--deb-init       $(CURDIR)/debian/$(APP_NAME) \
+		.
+	rm -rf $(DEBIAN_TMP)
 
 dep-install:
 	go get github.com/bshuster-repo/logrus-logstash-hook

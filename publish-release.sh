@@ -4,8 +4,7 @@
 GO_VERSION=${GO_VERSION:="1.6.2"}
 CLEANED_PATH=$(echo $PATH | sed -r 's|/(usr/local\|tmp)/go(/([0-9]\.)+[0-9])?/bin:||g')
 CACHED_DOWNLOAD="${HOME}/cache/go${GO_VERSION}.linux-amd64.tar.gz"
-VERSION="${CI_BRANCH}-$(echo ${CI_COMMIT_ID} | cut -c1-7)"
-PKG_NAME="kandalf_${VERSION}_amd64.deb"
+PKG_NAME="kandalf_${CI_BRANCH}_amd64.deb"
 
 export GOROOT="/tmp/go/${GO_VERSION}"
 export PATH="${GOROOT}/bin:${CLEANED_PATH}"
@@ -22,7 +21,7 @@ gem install fpm
 go get github.com/aktau/github-release
 
 # Change the app version
-sed -i -e "s/%app.version%/${VERSION}/g" src/main.go
+sed -i -e "s/%app.version%/${CI_BRANCH}/g" src/main.go
 
 # Build the binary
 make dep-install

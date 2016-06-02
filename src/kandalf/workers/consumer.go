@@ -81,7 +81,7 @@ func (c *internalConsumer) run(wg *sync.WaitGroup, die chan bool) {
 		return
 	}
 
-	forever := make(chan bool)
+	stopConsumer := make(chan bool)
 
 	// Now run the consumer
 	go func() {
@@ -105,7 +105,7 @@ func (c *internalConsumer) run(wg *sync.WaitGroup, die chan bool) {
 		for {
 			select {
 			case <-die:
-				forever <- true
+				stopConsumer <- true
 				return
 			default:
 			}
@@ -114,7 +114,7 @@ func (c *internalConsumer) run(wg *sync.WaitGroup, die chan bool) {
 		}
 	}()
 
-	<-forever
+	<-stopConsumer
 
 	logger.Instance().
 		Debug("Will stop consuming according to the signal came from Worker")

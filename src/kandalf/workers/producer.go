@@ -17,6 +17,13 @@ type internalProducer struct {
 	pipesList []pipes.Pipe
 }
 
+type internalScore struct {
+	position int
+	score    int
+}
+
+type internalScoreList []internalScore
+
 // Returns new instance of kafka producer
 func newInternalProducer() (*internalProducer, error) {
 	var brokers []string
@@ -86,7 +93,7 @@ func (p *internalProducer) handleMessage(msg internalMessage) (err error) {
 // Find the topic for a message, based on rules in pipes
 func getTopic(msg internalMessage, pipesList []pipes.Pipe) string {
 	var (
-		scores         map[int]int = make(map[int]int)
+		scores         internalScoreList = make(internalScoreList, len(pipesList))
 		pipeMatched    bool
 		pipeFound      bool
 		foundedPipeIdx int
@@ -94,26 +101,26 @@ func getTopic(msg internalMessage, pipesList []pipes.Pipe) string {
 	)
 
 	for position, pipe := range pipesList {
-		scores[position] = 0
+		scores[position] = internalScore{position: position, score: 0}
 		nbScores++
 
 		if len(msg.ExchangeName) > 0 && pipe.HasExchangeName {
 			pipeMatched, _ = path.Match(pipe.ExchangeName, msg.ExchangeName)
 			if pipeMatched {
-				scores[position]++
+				scores[position].score++
 			}
 		}
 
 		if len(msg.RoutedQueues) > 0 && pipe.HasRoutedQueue && isAllKeysMatchPattern(msg.RoutedQueues, pipe.RoutedQueue) {
-			scores[position]++
+			scores[position].score++
 		}
 
 		if len(msg.RoutingKeys) > 0 && pipe.HasRoutingKey && isAllKeysMatchPattern(msg.RoutingKeys, pipe.RoutingKey) {
-			scores[position]++
+			scores[position].score++
 		}
 
 		// If score is 3, than pipe satisfies to all message's fields
-		if scores[position] == 3 {
+		if scores[position].score == 3 {
 			pipeFound = true
 			foundedPipeIdx = position
 			break
@@ -121,17 +128,12 @@ func getTopic(msg internalMessage, pipesList []pipes.Pipe) string {
 	}
 
 	if !pipeFound && nbScores > 0 {
-		var positions []int
+		sort.Sort(sort.Reverse(scores))
 
-		for position := range scores {
-			positions = append(positions, position)
+		if (scores[0].score) > 0 {
+			pipeFound = true
+			foundedPipeIdx = scores[0].position
 		}
-
-		// Sort scores descending
-		sort.Sort(sort.Reverse(sort.IntSlice(positions)))
-
-		pipeFound = true
-		foundedPipeIdx = positions[0]
 	}
 
 	if pipeFound {
@@ -154,3 +156,8 @@ func isAllKeysMatchPattern(keys []string, pattern string) bool {
 
 	return true
 }
+
+// Methods to satisfy sort.Interface
+func (p internalScoreList) Len() int           { return len(p) }
+func (p internalScoreList) Less(i, j int) bool { return p[i].score < p[j].score }
+func (p internalScoreList) Swap(i, j int)      { p[i], p[j] = p[j], p[i] }

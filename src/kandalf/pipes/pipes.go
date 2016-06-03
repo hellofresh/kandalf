@@ -21,7 +21,7 @@ type Pipe struct {
 	HasRoutingKey   bool
 }
 
-type tPipes []Pipe
+type PipesList []Pipe
 
 var (
 	pipes []Pipe
@@ -41,7 +41,7 @@ func All(paths ...string) []Pipe {
 }
 
 // Reads file with pipes in YML and returns list of pipes
-func getPipes(path string) (pipes tPipes) {
+func getPipes(path string) (pipes PipesList) {
 	data, err := ioutil.ReadFile(path)
 	if err != nil {
 		log.Fatalf("Unable to read file with pipes: %v", err)
@@ -63,17 +63,7 @@ func getPipes(path string) (pipes tPipes) {
 	return pipes
 }
 
-// Method to satisfy sort.Interface
-func (slice tPipes) Len() int {
-	return len(slice)
-}
-
-// Method to satisfy sort.Interface
-func (slice tPipes) Less(i, j int) bool {
-	return slice[i].Priority > slice[j].Priority
-}
-
-// Method to satisfy sort.Interface
-func (slice tPipes) Swap(i, j int) {
-	slice[i], slice[j] = slice[j], slice[i]
-}
+// Methods to satisfy sort.Interface
+func (slice PipesList) Len() int           { return len(slice) }
+func (slice PipesList) Less(i, j int) bool { return slice[i].Priority > slice[j].Priority }
+func (slice PipesList) Swap(i, j int)      { slice[i], slice[j] = slice[j], slice[i] }

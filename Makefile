@@ -67,3 +67,6 @@ fmt:
 
 run:
 	go run -v $(CURDIR)/src/main.go -c=$(CURDIR)/data/config.yml -p=$(CURDIR)/data/pipes.yml
+
+test:
+	go test ./...

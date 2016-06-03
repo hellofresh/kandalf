@@ -1,11 +1,18 @@
 ---
 log:
   level:                "info"
+  # `logstash` or `syslog` available at the moment
+  adapter:              "syslog"
   logstash:
-    # "udp" or "tcp" supported
+    # `udp` or `tcp` supported
     protocol:           "tcp"
-    # In "<host>:<port>" format
+    # In `<host>:<port>` format
     address:            "logstash:5000"
+  syslog:
+    # `udp` or `tcp` supported
+    protocol:           "udp"
+    # In `<host>:<port>` format
+    address:            "localhost:514"
 kafka:
   brokers:
     # Docker
@@ -22,9 +29,9 @@ queue:
   flush_timeout:        5
   max_size:             10
   redis:
-    # In "<host>:<port>" format
+    # In `<host>:<port>` format
     address:            "redis:6379"
     # The name of the queue with failed messages
     key_name:           "failed_messages"
-    # The pause between attempts to flush content of "queue.redis.key_name" to kafka
+    # The pause between attempts to flush content of `queue.redis.key_name` to kafka
     flush_timeout:      10

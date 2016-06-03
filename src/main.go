@@ -20,6 +20,7 @@ func main() {
 
 	app.Name = "kandalf"
 	app.Usage = "Daemon that reads all messages from RabbitMQ and puts them to kafka"
+	// This will be replaced by `publish-release.sh`
 	app.Version = "%app.version%"
 	app.Authors = []cli.Author{
 		{

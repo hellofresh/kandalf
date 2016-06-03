@@ -2,10 +2,12 @@ package logger
 
 import (
 	"log"
+	"log/syslog"
 	"sync"
 
 	"github.com/Sirupsen/logrus"
-	ls "github.com/bshuster-repo/logrus-logstash-hook"
+	hSyslog "github.com/Sirupsen/logrus/hooks/syslog"
+	hLogstash "github.com/bshuster-repo/logrus-logstash-hook"
 	"github.com/olebedev/config"
 )
 
@@ -29,10 +31,20 @@ func Instance(configs ...*config.Config) *logrus.Logger {
 
 // Instantiates the logger object.
 func getLogger(c *config.Config) *logrus.Logger {
+	var hook logrus.Hook
+
 	l := logrus.New()
 	l.Level = getLevel(c)
 
-	hook, _ := getLogstashHook(c)
+	adapter := c.UString("log.adapter", "syslog")
+	switch adapter {
+	case "logstash":
+		hook, _ = getLogstashHook(c)
+	case "syslog":
+	default:
+		hook, _ = getSyslogHook(c, l.Level)
+	}
+
 	if hook != nil {
 		l.Hooks.Add(hook)
 	}
@@ -56,7 +68,7 @@ func getLevel(c *config.Config) (lvl logrus.Level) {
 }
 
 // Returns hook to send all logs to logstash
-func getLogstashHook(c *config.Config) (hook *ls.Hook, err error) {
+func getLogstashHook(c *config.Config) (hook *hLogstash.Hook, err error) {
 	protocol, err := c.String("log.logstash.protocol")
 	if err != nil {
 		return nil, err
@@ -67,9 +79,46 @@ func getLogstashHook(c *config.Config) (hook *ls.Hook, err error) {
 		return nil, err
 	}
 
-	hook, err = ls.NewHook(protocol, address, "kandalf")
+	hook, err = hLogstash.NewHook(protocol, address, "kandalf")
 	if err != nil {
 		log.Fatalf("Unable to instantiate logstash hook: %v", err)
+	}
+
+	return hook, nil
+}
+
+// Returns hook that sends all logs to syslog
+func getSyslogHook(c *config.Config, l logrus.Level) (hook *hSyslog.SyslogHook, err error) {
+	var priority syslog.Priority
+
+	switch l {
+	case logrus.DebugLevel:
+		priority = syslog.LOG_DEBUG
+	case logrus.InfoLevel:
+		priority = syslog.LOG_INFO
+	case logrus.WarnLevel:
+		priority = syslog.LOG_WARNING
+	case logrus.ErrorLevel:
+		priority = syslog.LOG_ERR
+	case logrus.FatalLevel:
+		priority = syslog.LOG_CRIT
+	case logrus.PanicLevel:
+		priority = syslog.LOG_EMERG
+	}
+
+	protocol, err := c.String("log.syslog.protocol")
+	if err != nil {
+		return nil, err
+	}
+
+	address, err := c.String("log.syslog.address")
+	if err != nil {
+		return nil, err
+	}
+
+	hook, err = hSyslog.NewSyslogHook(protocol, address, priority, "kandalf")
+	if err != nil {
+		log.Fatalf("Unable to instantiate syslog hook: %v", err)
 	}
 
 	return hook, nil

@@ -21,7 +21,7 @@ esac
 
 if [ -x "/etc/init.d/kandalf" ] || [ -e "/etc/kandalf/config.yml" ]; then
   if [ ! -e "/etc/init/kandalf.conf" ]; then
-    update-rc.d recause defaults
+    update-rc.d kandalf defaults
   fi
 fi
 

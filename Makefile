@@ -2,7 +2,8 @@ export GOPATH=$(CURDIR)/.go
 
 APP_NAME=kandalf
 OUTDIR=$(CURDIR)/out
-VERSION=`$(OUTDIR)/$(APP_NAME) -v | cut -d ' ' -f 3`
+# Remove the "v" prefix from version
+VERSION=`$(OUTDIR)/$(APP_NAME) -v | cut -d ' ' -f 3 | tr -d 'v'`
 DEBIAN_TMP=$(OUTDIR)/deb
 
 $(OUTDIR)/$(APP_NAME): $(CURDIR)/src/main.go

@@ -1,5 +1,5 @@
 hash: 06665482f03907e25a8fe50e0a149bc15c5df364052c9a35e7f1e2ac85ecd49b
-updated: 2016-07-27T13:01:36.944434346+02:00
+updated: 2016-07-27T16:10:56.811693715+02:00
 imports:
 - name: github.com/bshuster-repo/logrus-logstash-hook
   version: f8b7f00a4feb2088e5f7290f1c9360d1081ba0b5
@@ -31,8 +31,15 @@ imports:
   version: a646d33e2ee3172a661fc09bca23bb4889a41bc8
   subpackages:
   - unix
+- name: gopkg.in/bsm/ratelimit.v1
+  version: db14e161995a5177acef654cb0dd785e8ee8bc22
 - name: gopkg.in/redis.v3
   version: b5e368500d0a508ef8f16e9c2d4025a8a46bcc29
+  subpackages:
+  - internal
+  - internal/consistenthash
+  - internal/hashtag
+  - internal/pool
 - name: gopkg.in/Shopify/sarama.v1
   version: 38d579a708d2f87dd4e35342241048e361d1e66a
 - name: gopkg.in/yaml.v2

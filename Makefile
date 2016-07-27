@@ -1,4 +1,3 @@
-export GO15VENDOREXPERIMENT=1
 GO_LINKER_FLAGS=-ldflags="-s -w"
 
 APP_NAME=kandalf
@@ -11,18 +10,19 @@ GO_VET_FILES+=$(MAIN_GO)
 # Useful directories
 DIR_BUILD=$(CURDIR)/build
 DIR_OUT=$(DIR_BUILD)/out
+DIR_OUT_LINUX=$(DIR_OUT)/linux
 DIR_DEBIAN_TMP=$(DIR_OUT)/deb
 DIR_RESOURCES=$(DIR_BUILD)/resources
 
 # Remove the "v" prefix from version
-VERSION=`$(DIR_OUT)/$(APP_NAME) -v | cut -d ' ' -f 3 | tr -d 'v'`
+VERSION=`$(DIR_OUT_LINUX)/$(APP_NAME) -v | cut -d ' ' -f 3 | tr -d 'v'`
 
 EXTERNAL_TOOLS=\
 	github.com/Masterminds/glide
 
 .build-linux:
 	@echo Build Linux amd64
-	env GOOS=linux GOARCH=amd64 go build -o $(DIR_OUT)/linux/$(APP_NAME) $(GO_LINKER_FLAGS) $(MAIN_GO)
+	env GOOS=linux GOARCH=amd64 go build -o $(DIR_OUT_LINUX)/$(APP_NAME) $(GO_LINKER_FLAGS) $(MAIN_GO)
 
 .build-osx:
 	@echo Build OSX amd64
@@ -38,7 +38,7 @@ deb: .build-linux
 	@mkdir -p $(DIR_DEBIAN_TMP)/usr/local/bin
 	@install -m 644 $(DIR_RESOURCES)/config.yml $(DIR_DEBIAN_TMP)/etc/$(APP_NAME)/config.yml
 	@install -m 644 $(DIR_RESOURCES)/pipes.yml $(DIR_DEBIAN_TMP)/etc/$(APP_NAME)/pipes.yml
-	@install -m 755 $(DIR_OUT)/linux/$(APP_NAME) $(DIR_DEBIAN_TMP)/usr/local/bin
+	@install -m 755 $(DIR_OUT_LINUX)/$(APP_NAME) $(DIR_DEBIAN_TMP)/usr/local/bin
 	fpm -n $(APP_NAME) \
 		-v $(VERSION) \
 		-t deb \

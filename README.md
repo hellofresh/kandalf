@@ -29,34 +29,26 @@ Also the **priority** of pipe is important, pipes with higher priority are more 
 ## How to build a binary on a local machine
 
 1. Make sure that you have `make` utility installed on your machine;
-2. Run: `make dep-install` to install dependencies;
+2. Run: `make bootstrap` to install [glide](https://glide.sh) and dependencies;
 3. Run: `make` to build binary;
-4. Binary would be in `out/kandalf`.
+4. Binaries for Linux and MacOS X would be in `build/out/`.
 
 ## Hot to build deb-package
 
 1. Make sure that you have `make` utility installed on your machine;
 2. Make sure that you have [Effing Package Management](https://github.com/jordansissel/fpm) installed on your machine;
-3. Run: `make dep-install` to install dependencies;
+3. Run: `make bootstrap` to install [glide](https://glide.sh) and dependencies;
 4. Run: `make deb`
 
-## Development
-
-### How to build a binary in a docker environment
-
-1. Make sure that you have `make` utility installed on your machine;
-2. Make sure that you have `docker` and `docker-compose` installed.
-3. Run: `make docker-build`
-4. Binary would be in `out/kandalf-linux-amd64`.
-
-### How to run service in a docker environment
+## How to run service in a docker environment
 
 1. Make sure that you have `make` utility installed on your machine;
 2. Make sure that you have `docker` and `docker-compose` installed.
 3. Run: `make docker-up-env`
-4. Run: `make docker-build`
+4. Run: `make`
 5. Run: `make docker-run`
 
 ## Todo
 
-* [ ] Handle dependencies in a proper way (gvt, glide or smth.)
+* [x] Handle dependencies in a proper way (gvt, glide or smth.)
+* [ ] More tests

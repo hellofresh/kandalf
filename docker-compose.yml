@@ -3,10 +3,10 @@ services:
   bridge:
     build:          .
     container_name: bridge
-    command:        ./kandalf-linux-amd64 -c data/config.yml -p data/pipes.yml
+    command:        ./kandalf -c /config/config.yml -p /config/pipes.yml
     volumes:
-      - "./out:/app"
-      - "./data:/app/data"
+      - "./build/out/linux:/app"
+      - "./build/resources:/config"
     links:
       - logstash
       - kafka
@@ -38,7 +38,7 @@ services:
     ports:
       - "5000:5000"
     volumes:
-      - "./data/logstash/:/etc/logstash/conf.d/"
+      - "./build/resources/data/logstash/:/etc/logstash/conf.d/"
     links:
       - elasticsearch
 
@@ -48,7 +48,7 @@ services:
   rmq:
     image:          rabbitmq:3-management
     volumes:
-      - "./data/rmq/:/etc/rabbitmq/"
+      - "./build/resources/data/rmq/:/etc/rabbitmq/"
     ports:
       - "5672:5672"
       - "15672:15672"

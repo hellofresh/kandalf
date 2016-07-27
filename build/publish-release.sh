@@ -11,7 +11,7 @@ gem install fpm
 go get github.com/aktau/github-release
 
 # Change the app version
-sed -i -e "s/%app.version%/${VERSION}/g" src/main.go
+sed -i -e "s/%app.version%/${VERSION}/g" main.go
 
 # Build the binary
 make bootstrap

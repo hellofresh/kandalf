@@ -7,9 +7,9 @@ import (
 	log "github.com/Sirupsen/logrus"
 	"gopkg.in/Shopify/sarama.v1"
 
-	"../config"
-	"../logger"
-	"../pipes"
+	"kandalf/config"
+	"kandalf/logger"
+	"kandalf/pipes"
 )
 
 type internalProducer struct {

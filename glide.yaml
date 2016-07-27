@@ -1,0 +1,15 @@
+package: kandalf
+import:
+- package: github.com/Sirupsen/logrus
+  version: ^0.10.0
+  subpackages:
+  - hooks/syslog
+- package: github.com/bshuster-repo/logrus-logstash-hook
+- package: github.com/olebedev/config
+- package: github.com/streadway/amqp
+- package: github.com/urfave/cli
+  version: ^1.18.0
+- package: gopkg.in/Shopify/sarama.v1
+  version: ^1.9.0
+- package: gopkg.in/yaml.v2
+- package: gopkg.in/redis.v3

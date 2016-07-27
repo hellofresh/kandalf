@@ -9,8 +9,8 @@ import (
 	log "github.com/Sirupsen/logrus"
 	"gopkg.in/redis.v3"
 
-	"../config"
-	"../logger"
+	"kandalf/config"
+	"kandalf/logger"
 )
 
 type internalMessage struct {

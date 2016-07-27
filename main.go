@@ -8,10 +8,10 @@ import (
 
 	"github.com/urfave/cli"
 
-	"./kandalf/config"
-	"./kandalf/logger"
-	"./kandalf/pipes"
-	"./kandalf/workers"
+	"kandalf/config"
+	"kandalf/logger"
+	"kandalf/pipes"
+	"kandalf/workers"
 )
 
 // Instantiates new application and launches it

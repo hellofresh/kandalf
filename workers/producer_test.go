@@ -4,7 +4,7 @@ import (
 	"sort"
 	"testing"
 
-	"../pipes"
+	"kandalf/pipes"
 )
 
 func Test_getTopic_RoutingKeysExact(t *testing.T) {

@@ -1,52 +1,56 @@
-export GOPATH=$(CURDIR)/.go
+GO_LINKER_FLAGS=-ldflags="-s -w"
 
 APP_NAME=kandalf
-OUTDIR=$(CURDIR)/out
+MAIN_GO=$(CURDIR)/main.go
+
+# Go vet settings
+GO_VET_FILES=`go list -f '{{.Dir}}' ./... | grep -v /vendor/ | grep -v '$(APP_NAME)$$'`
+GO_VET_FILES+=$(MAIN_GO)
+
+# Useful directories
+DIR_BUILD=$(CURDIR)/build
+DIR_OUT=$(DIR_BUILD)/out
+DIR_OUT_LINUX=$(DIR_OUT)/linux
+DIR_DEBIAN_TMP=$(DIR_OUT)/deb
+DIR_RESOURCES=$(DIR_BUILD)/resources
+
 # Remove the "v" prefix from version
-VERSION=`$(OUTDIR)/$(APP_NAME) -v | cut -d ' ' -f 3 | tr -d 'v'`
-DEBIAN_TMP=$(OUTDIR)/deb
+VERSION=`$(DIR_OUT_LINUX)/$(APP_NAME) -v | cut -d ' ' -f 3 | tr -d 'v'`
 
-$(OUTDIR)/$(APP_NAME): $(CURDIR)/src/main.go
-	go build -o $(OUTDIR)/$(APP_NAME) -ldflags="-s -w" $(CURDIR)/src/main.go
+EXTERNAL_TOOLS=\
+	github.com/Masterminds/glide
 
-deb: $(OUTDIR)/$(APP_NAME)
-	mkdir $(DEBIAN_TMP)
-	mkdir -p $(DEBIAN_TMP)/etc/$(APP_NAME)
-	mkdir -p $(DEBIAN_TMP)/usr/local/bin
-	install -m 644 $(CURDIR)/data/config.yml $(DEBIAN_TMP)/etc/$(APP_NAME)/config.yml
-	install -m 644 $(CURDIR)/data/pipes.yml $(DEBIAN_TMP)/etc/$(APP_NAME)/pipes.yml
-	install -m 755 $(OUTDIR)/$(APP_NAME) $(DEBIAN_TMP)/usr/local/bin
+.build-linux:
+	@echo Build Linux amd64
+	env GOOS=linux GOARCH=amd64 go build -o $(DIR_OUT_LINUX)/$(APP_NAME) $(GO_LINKER_FLAGS) $(MAIN_GO)
+
+.build-osx:
+	@echo Build OSX amd64
+	env GOOS=darwin GOARCH=amd64 go build -o $(DIR_OUT)/darwin/$(APP_NAME) $(GO_LINKER_FLAGS) $(MAIN_GO)
+
+# Default make target
+build: .build-linux .build-osx
+
+deb: .build-linux
+	@echo Build debian package
+	@mkdir $(DIR_DEBIAN_TMP)
+	@mkdir -p $(DIR_DEBIAN_TMP)/etc/$(APP_NAME)
+	@mkdir -p $(DIR_DEBIAN_TMP)/usr/local/bin
+	@install -m 644 $(DIR_RESOURCES)/config.yml $(DIR_DEBIAN_TMP)/etc/$(APP_NAME)/config.yml
+	@install -m 644 $(DIR_RESOURCES)/pipes.yml $(DIR_DEBIAN_TMP)/etc/$(APP_NAME)/pipes.yml
+	@install -m 755 $(DIR_OUT_LINUX)/$(APP_NAME) $(DIR_DEBIAN_TMP)/usr/local/bin
 	fpm -n $(APP_NAME) \
 		-v $(VERSION) \
 		-t deb \
 		-s dir \
-		-C $(DEBIAN_TMP) \
-		-p $(OUTDIR) \
+		-C $(DIR_DEBIAN_TMP) \
+		-p $(DIR_OUT) \
 		--config-files   /etc/$(APP_NAME) \
-		--after-install  $(CURDIR)/debian/postinst \
-		--after-remove   $(CURDIR)/debian/postrm \
-		--deb-init       $(CURDIR)/debian/$(APP_NAME) \
+		--after-install  $(CURDIR)/build/debian/postinst \
+		--after-remove   $(CURDIR)/build/debian/postrm \
+		--deb-init       $(CURDIR)/build/debian/$(APP_NAME) \
 		.
-	rm -rf $(DEBIAN_TMP)
-
-dep-install:
-	go get github.com/bshuster-repo/logrus-logstash-hook
-	go get github.com/olebedev/config
-	go get github.com/Sirupsen/logrus
-	go get github.com/streadway/amqp
-	go get github.com/urfave/cli
-	go get gopkg.in/redis.v3
-	go get gopkg.in/Shopify/sarama.v1
-	go get gopkg.in/yaml.v2
-
-docker-build:
-	docker run --rm -it \
-		-v $(GOPATH):/gopath \
-		-v $(OUTDIR):/out \
-		-v $(CURDIR)/src:/app \
-		-e "GOPATH=/gopath" \
-		-w /app golang:latest \
-		sh -c 'go build -o /out/$(APP_NAME)-linux-amd64 -ldflags="-s -w" main.go'
+	@rm -rf $(DIR_DEBIAN_TMP)
 
 docker-run:
 	docker-compose up bridge
@@ -64,10 +68,27 @@ docker-up-env:
 	docker-compose exec rmq rabbitmqctl trace_on
 
 fmt:
-	gofmt -s=true -w $(CURDIR)/src
+	@gofmt -s=true -w $(GO_VET_FILES)
 
 run:
-	go run -v $(CURDIR)/src/main.go -c=$(CURDIR)/data/config.yml -p=$(CURDIR)/data/pipes.yml
+	go run -v $(MAIN_GO) -c=$(DIR_RESOURCES)/config.yml -p=$(DIR_RESOURCES)/pipes.yml
+
+vet:
+	@for vet_file in $(GO_VET_FILES); do \
+		go tool vet $$vet_file; \
+		if [ $$? -eq 1 ]; then \
+			echo ""; \
+			echo "Vet found suspicious constructs. Please check the reported constructs"; \
+			echo "and fix them if necessary before submitting the code for reviewal."; \
+		fi \
+	done
+
+bootstrap:
+	@for tool in  $(EXTERNAL_TOOLS) ; do \
+		echo "Installing $$tool" ; \
+		go get -u $$tool; \
+	done
+	@echo "Installing dependencies"; glide install
 
 test:
-	go test ./...
+	go test `go list ./... | grep -v /vendor/ | grep -v '$(APP_NAME)$$'`

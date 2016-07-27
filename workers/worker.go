@@ -6,8 +6,8 @@ import (
 	"sync"
 	"time"
 
-	"../config"
-	"../logger"
+	"kandalf/config"
+	"kandalf/logger"
 )
 
 // The value of pause time to prevent CPU overload

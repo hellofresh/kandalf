@@ -6,7 +6,7 @@ import (
 
 	c "github.com/olebedev/config"
 
-	l "../logger"
+	l "kandalf/logger"
 )
 
 var (

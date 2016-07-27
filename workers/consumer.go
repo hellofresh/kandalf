@@ -6,7 +6,7 @@ import (
 
 	"github.com/streadway/amqp"
 
-	"../logger"
+	"kandalf/logger"
 )
 
 var (

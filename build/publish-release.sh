@@ -14,7 +14,7 @@ go get github.com/aktau/github-release
 sed -i -e "s/%app.version%/${VERSION}/g" src/main.go
 
 # Build the binary
-make dep-install
+make bootstrap
 make deb
 
 # Upload package to release assets
@@ -23,4 +23,4 @@ github-release upload \
     --repo kandalf \
     --tag ${CI_BRANCH} \
     --name ${PKG_NAME} \
-    --file out/${PKG_NAME}
+    --file build/out/${PKG_NAME}

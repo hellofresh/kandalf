@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"os"
 	"os/signal"
 	"sync"
@@ -20,7 +21,7 @@ func main() {
 
 	app.Name = "kandalf"
 	app.Usage = "Daemon that reads all messages from RabbitMQ and puts them to kafka"
-	// This will be replaced by `publish-release.sh`
+	// This will be replaced by `build/codeship/publish-release.sh`
 	app.Version = "%app.version%"
 	app.Authors = []cli.Author{
 		{
@@ -42,7 +43,10 @@ func main() {
 	}
 	app.Action = actionRun
 
-	app.Run(os.Args)
+	err := app.Run(os.Args)
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "Unhandled error occurred while running application: %v\n", err)
+	}
 }
 
 // Runs the application

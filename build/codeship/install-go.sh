@@ -1,4 +1,5 @@
 #!/usr/bin/env bash
+# This script is used only with Codeship to install latest Go
 
 # Download latest Go
 GO_VERSION=${GO_VERSION:="1.6.3"}

@@ -4,7 +4,7 @@ The main idea is to read all messages from all queues in RabbitMQ and send them 
 
 ## Implementation
 
-This service is written in Go language and can be build with go compiler of version 1.5 and above.
+This service is written in Go language and can be build with go compiler of version 1.6 and above.
 
 To get all messages from RabbitMQ without any exception "[Firehose Tracer](https://www.rabbitmq.com/firehose.html)" should be enabled:
 
@@ -12,7 +12,7 @@ To get all messages from RabbitMQ without any exception "[Firehose Tracer](https
 rabbitmqctl trace_on
 ```
 
-The rules, defining which messages should be send to which Kafka topics, are defined in "[pipes.yml](./data/pipes.yml)" and is called "pipes".
+The rules, defining which messages should be send to which Kafka topics, are defined in "[pipes.yml](./build/resources/pipes.yml)" and is called "pipes".
 
 Each pipe should contain at least name of the topic in Kafka and at least one of the following rules related to metadata from RabbitMQ: "exchange_name", "routed_queue" and "routing_key".
 

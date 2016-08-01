@@ -1,4 +1,6 @@
 #!/usr/bin/env bash
+# This script is used only with Codeship to build deb-package
+# and attatch it to release on Github
 
 # Remove the "v" prefix from deb-package name
 VERSION=$(echo ${CI_BRANCH} | tr -d 'v')

@@ -76,7 +76,7 @@ func (p *internalProducer) handleMessage(msg internalMessage) (err error) {
 		} else {
 			logger.Instance().
 				WithFields(fields).
-				Debug("Un error occurred while sending message to kafka")
+				Debug("An error occurred while sending message to kafka")
 		}
 	} else {
 		err = nil

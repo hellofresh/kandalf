@@ -75,20 +75,31 @@ func (q *internalQueue) run(wg *sync.WaitGroup, die chan bool) {
 
 	// Periodically flush the queue to the kafka
 	go func() {
+		var (
+			lastFlush  time.Time = time.Now()
+			nbMessages int
+			oneSec     time.Duration = time.Second
+		)
+
 		for {
 			select {
 			case <-die:
 				q.isWorking = false
+
 				// Before exiting the working cycle, try to flush the messages to kafka
 				q.handleMessages()
 				return
 			default:
 			}
 
-			if len(q.messages) >= q.maxSize {
+			nbMessages = len(q.messages)
+
+			if (nbMessages >= q.maxSize) || (nbMessages > 0 && time.Now().Sub(lastFlush) > q.flushTimeout) {
 				q.handleMessages()
+
+				lastFlush = time.Now()
 			} else {
-				time.Sleep(q.flushTimeout)
+				time.Sleep(oneSec)
 			}
 		}
 	}()
@@ -124,17 +135,11 @@ func (q *internalQueue) handleMessages() {
 		failedMessages []internalMessage = make([]internalMessage, 0)
 	)
 
+	logger.Instance().Debug("Start sending messages to kafka")
+
 	for _, msg := range q.messages {
 		err = q.producer.handleMessage(msg)
 		if err == nil {
-			logger.Instance().
-				WithFields(log.Fields{
-					"exchange_name": msg.ExchangeName,
-					"routed_queues": msg.RoutedQueues,
-					"routing_keys":  msg.RoutingKeys,
-				}).
-				Debug("Successfully sent message to kafka")
-
 			continue
 		} else {
 			logger.Instance().

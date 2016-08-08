@@ -52,10 +52,10 @@ func getPipes(path string) (pipes PipesList) {
 		log.Fatalf("Unable to parse pipes: %v", err)
 	}
 
-	for _, pipe := range pipes {
-		pipe.HasExchangeName = len(pipe.ExchangeName) > 0
-		pipe.HasRoutedQueue = len(pipe.RoutedQueue) > 0
-		pipe.HasRoutingKey = len(pipe.RoutingKey) > 0
+	for i, pipe := range pipes {
+		pipes[i].HasExchangeName = len(pipe.ExchangeName) > 0
+		pipes[i].HasRoutedQueue = len(pipe.RoutedQueue) > 0
+		pipes[i].HasRoutingKey = len(pipe.RoutingKey) > 0
 	}
 
 	sort.Sort(pipes)

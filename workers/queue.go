@@ -127,6 +127,14 @@ func (q *internalQueue) handleMessages() {
 	for _, msg := range q.messages {
 		err = q.producer.handleMessage(msg)
 		if err == nil {
+			logger.Instance().
+				WithFields(log.Fields{
+					"exchange_name": msg.ExchangeName,
+					"routed_queues": msg.RoutedQueues,
+					"routing_keys":  msg.RoutingKeys,
+				}).
+				Debug("Successfully sent message to kafka")
+
 			continue
 		} else {
 			logger.Instance().

@@ -3,6 +3,7 @@ package workers
 import (
 	"encoding/json"
 	"fmt"
+	"strings"
 	"sync"
 	"time"
 
@@ -142,6 +143,10 @@ func (q *internalQueue) handleMessages() {
 		if err == nil {
 			continue
 		} else {
+			if strings.Contains(err.Error(), "topic or partition that does not exist") {
+				continue
+			}
+
 			logger.Instance().
 				WithError(err).
 				Warning("Unable to send message to kafka")

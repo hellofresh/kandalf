@@ -67,9 +67,9 @@ func (p *internalProducer) handleMessage(msg internalMessage) (err error) {
 			Value: sarama.ByteEncoder(msg.Body),
 		})
 
-		if err == nil {
-			fields["topic"] = topic
+		fields["topic"] = topic
 
+		if err == nil {
 			logger.Instance().
 				WithFields(fields).
 				Debug("Successfully sent message to kafka")
@@ -107,28 +107,21 @@ func getTopic(msg internalMessage, pipesList []pipes.Pipe) string {
 		if len(msg.ExchangeName) > 0 && pipe.HasExchangeName {
 			pipeMatched, _ = path.Match(pipe.ExchangeName, msg.ExchangeName)
 			if pipeMatched {
-				scores[position].score++
+				scores[position].score += pipe.Priority + 1
 			}
 		}
 
 		if len(msg.RoutedQueues) > 0 && pipe.HasRoutedQueue && isAllKeysMatchPattern(msg.RoutedQueues, pipe.RoutedQueue) {
-			scores[position].score++
+			scores[position].score += pipe.Priority + 1
 		}
 
 		if len(msg.RoutingKeys) > 0 && pipe.HasRoutingKey && isAllKeysMatchPattern(msg.RoutingKeys, pipe.RoutingKey) {
-			scores[position].score++
-		}
-
-		// If score is 3, than pipe satisfies to all message's fields
-		if scores[position].score == 3 {
-			pipeFound = true
-			foundedPipeIdx = position
-			break
+			scores[position].score += pipe.Priority + 1
 		}
 	}
 
-	if !pipeFound && nbScores > 0 {
-		sort.Sort(sort.Reverse(scores))
+	if nbScores > 0 {
+		sort.Sort(scores)
 
 		if (scores[0].score) > 0 {
 			pipeFound = true
@@ -159,5 +152,5 @@ func isAllKeysMatchPattern(keys []string, pattern string) bool {
 
 // Methods to satisfy sort.Interface
 func (p internalScoreList) Len() int           { return len(p) }
-func (p internalScoreList) Less(i, j int) bool { return p[i].score < p[j].score }
+func (p internalScoreList) Less(i, j int) bool { return p[i].score > p[j].score }
 func (p internalScoreList) Swap(i, j int)      { p[i], p[j] = p[j], p[i] }

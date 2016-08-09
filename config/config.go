@@ -40,6 +40,7 @@ func getConfig(path string) *c.Config {
 	}
 
 	// After reading config file, we need to setup logs again
+	l.Close()
 	l.Instance(cnf)
 
 	return cnf

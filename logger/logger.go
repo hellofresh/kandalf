@@ -3,6 +3,7 @@ package logger
 import (
 	"log"
 	"log/syslog"
+	"reflect"
 	"sync"
 
 	"github.com/Sirupsen/logrus"
@@ -29,6 +30,21 @@ func Instance(configs ...*config.Config) *logrus.Logger {
 	return logger
 }
 
+// Close all closable hooks on SIGHUP
+func Close() {
+	var closableType reflect.Type = reflect.TypeOf((*closableHook)(nil)).Elem()
+
+	if logger != nil {
+		for _, hooks := range logger.Hooks {
+			for _, hook := range hooks {
+				if reflect.TypeOf(hook).Implements(closableType) {
+					hook.(closableHook).Close()
+				}
+			}
+		}
+	}
+}
+
 // Instantiates the logger object.
 func getLogger(c *config.Config) *logrus.Logger {
 	var hook logrus.Hook
@@ -38,6 +54,8 @@ func getLogger(c *config.Config) *logrus.Logger {
 
 	adapter := c.UString("log.adapter", "syslog")
 	switch adapter {
+	case "file":
+		hook, _ = getFileHook(c, l.Level)
 	case "logstash":
 		hook, _ = getLogstashHook(c)
 	case "syslog":
@@ -65,6 +83,16 @@ func getLevel(c *config.Config) (lvl logrus.Level) {
 	}
 
 	return lvl
+}
+
+// Returns hook that stores messages in plain text file
+func getFileHook(c *config.Config, l logrus.Level) (hook *fileHook, err error) {
+	hook, err = newFileHook(c, l)
+	if err != nil {
+		log.Fatalf("Unable to instantiate file logger hook: %v", err)
+	}
+
+	return hook, nil
 }
 
 // Returns hook to send all logs to logstash

@@ -40,22 +40,22 @@ EXTERNAL_TOOLS=\
 		fi \
 	done
 
-.build-linux:
+# Default make target
+build: check build-linux build-osx
+
+build-linux:
 	@echo Build Linux amd64
 	@env GOOS=linux GOARCH=amd64 go build -o $(DIR_OUT_LINUX)/$(APP_NAME) $(GO_LINKER_FLAGS) $(MAIN_GO)
 
-.build-osx:
+build-osx:
 	@echo Build OSX amd64
 	@env GOOS=darwin GOARCH=amd64 go build -o $(DIR_OUT)/darwin/$(APP_NAME) $(GO_LINKER_FLAGS) $(MAIN_GO)
-
-# Default make target
-build: check .build-linux .build-osx
 
 # Launch all checks
 check: .vet .errcheck
 
 # Build deb-package with Effing Package Management (https://github.com/jordansissel/fpm)
-deb: check .build-linux
+deb: check build-linux
 	@echo Build debian package
 	@mkdir $(DIR_DEBIAN_TMP)
 	@mkdir -p $(DIR_DEBIAN_TMP)/etc/$(APP_NAME)

@@ -1,8 +1,17 @@
 ---
 log:
   level:                "info"
-  # `logstash` or `syslog` available at the moment
-  adapter:              "syslog"
+  # `file`, `logstash` or `syslog` available at the moment
+  adapter:              "file"
+  file:
+    # Path to the file to write logs to
+    path:               "/var/log/kandalf.log"
+    # The maximum number of days to retain old log files based on the timestamp encoded in their filename
+    max_age:            0
+    # The maximum number of old log files to retain
+    max_backups:        3
+    # The maximum size in megabytes of the log file before it gets rotated
+    max_size:           0
   logstash:
     # `udp` or `tcp` supported
     protocol:           "tcp"
@@ -25,8 +34,9 @@ rabbitmq:
     # Docker
     - "amqp://rmq"
 queue:
-  # In seconds
+  # The pause between attempts to flush in-memory queue to kafka
   flush_timeout:        5
+  # Max length of in-memory messages queue
   max_size:             10
   redis:
     # In `<host>:<port>` format

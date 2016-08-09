@@ -20,6 +20,8 @@ services:
 
   kafka:
     image:          spotify/kafka
+    ports:
+      - "9092:9092"
     environment:
       TOPICS:       "customer_subscription,customer_created,default"
 
@@ -44,6 +46,8 @@ services:
 
   redis:
     image:          redis
+    ports:
+      - "6379:6379"
 
   rmq:
     image:          rabbitmq:3-management

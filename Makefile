@@ -37,6 +37,10 @@ EXTERNAL_TOOLS=\
 			errcheck $$project_file; \
 		else \
 			errcheck $$(find $$project_file -type f); \
+		fi; \
+		if [ $$? -eq 1 ]; then \
+			echo ""; \
+			echo "Found not handled returning errors. Please check them and fix if necessary."; \
 		fi \
 	done
 

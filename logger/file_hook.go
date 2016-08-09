@@ -68,9 +68,9 @@ func (h *fileHook) Fire(entry *logrus.Entry) error {
 		return fmt.Errorf("Unable to generate string for log entry: %v", err)
 	}
 
-	h.lj.Write([]byte(msg))
+	_, err = h.lj.Write([]byte(msg))
 
-	return nil
+	return err
 }
 
 func (h *fileHook) Levels() []logrus.Level {

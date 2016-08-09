@@ -38,7 +38,7 @@ func Close() {
 		for _, hooks := range logger.Hooks {
 			for _, hook := range hooks {
 				if reflect.TypeOf(hook).Implements(closableType) {
-					hook.(closableHook).Close()
+					_ = hook.(closableHook).Close()
 				}
 			}
 		}

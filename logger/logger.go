@@ -32,13 +32,13 @@ func Instance(configs ...*config.Config) *logrus.Logger {
 
 // Close all closable hooks on SIGHUP
 func Close() {
-	var closableType reflect.Type = reflect.TypeOf((*closableHook)(nil)).Elem()
+	var closableType reflect.Type = reflect.TypeOf((*closable)(nil)).Elem()
 
 	if logger != nil {
 		for _, hooks := range logger.Hooks {
 			for _, hook := range hooks {
 				if reflect.TypeOf(hook).Implements(closableType) {
-					_ = hook.(closableHook).Close()
+					_ = hook.(closable).Close()
 				}
 			}
 		}

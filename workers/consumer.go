@@ -6,6 +6,7 @@ import (
 
 	"github.com/streadway/amqp"
 
+	"kandalf/config"
 	"kandalf/logger"
 )
 
@@ -110,7 +111,8 @@ func (c *internalConsumer) run(wg *sync.WaitGroup, die chan bool) {
 			default:
 			}
 
-			time.Sleep(infiniteCycleTimeout)
+			// Prevent CPU overload
+			time.Sleep(config.InfiniteCycleTimeout)
 		}
 	}()
 

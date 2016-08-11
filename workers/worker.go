@@ -10,9 +10,6 @@ import (
 	"kandalf/logger"
 )
 
-// The value of pause time to prevent CPU overload
-var infiniteCycleTimeout time.Duration = 2 * time.Second
-
 type Worker struct {
 	die       chan bool
 	reload    chan bool
@@ -52,7 +49,7 @@ func (w *Worker) Run(wgMain *sync.WaitGroup, dieMain chan bool) {
 		}
 
 		// Prevent CPU overload
-		time.Sleep(infiniteCycleTimeout)
+		time.Sleep(config.InfiniteCycleTimeout)
 	}
 }
 
@@ -96,7 +93,7 @@ func (w *Worker) doRun() {
 				}
 
 				// Prevent CPU overload
-				time.Sleep(infiniteCycleTimeout)
+				time.Sleep(config.InfiniteCycleTimeout)
 			}
 		}()
 

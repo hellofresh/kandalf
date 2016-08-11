@@ -140,7 +140,9 @@ func (cl *Cluster) Run(wgMain *sync.WaitGroup, dieMain chan bool) {
 		}
 
 		fmt.Println("Leader is ", cl.raft.Leader())
-		time.Sleep(2 * time.Second)
+
+		// Prevent CPU overload
+		time.Sleep(config.InfiniteCycleTimeout)
 	}
 }
 

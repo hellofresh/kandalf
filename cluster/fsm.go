@@ -1,3 +1,5 @@
+// The nearly all implementation of FSM is taken from
+// https://github.com/siddontang/redis-failover project.
 package cluster
 
 import (
@@ -16,7 +18,6 @@ const (
 	cmdSet = "set"
 )
 
-// save monitored master addr
 type fsm struct {
 	sync.Mutex
 

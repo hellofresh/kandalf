@@ -13,6 +13,7 @@ import (
 	"kandalf/config"
 	"kandalf/logger"
 	"kandalf/pipes"
+	"kandalf/runnable"
 	"kandalf/workers"
 )
 
@@ -22,7 +23,7 @@ func main() {
 
 	app.Name = "kandalf"
 	app.Usage = "Daemon that reads all messages from RabbitMQ and puts them to kafka"
-	// This will be replaced by `build/codeship/publish-release.sh`
+	// This will be replaced by `_build/codeship/publish-release.sh`
 	app.Version = "%app.version%"
 	app.Authors = []cli.Author{
 		{
@@ -51,34 +52,17 @@ func main() {
 }
 
 // Runs the application
-func actionRun(ctx *cli.Context) (err error) {
+func actionRun(ctx *cli.Context) error {
 	var (
-		cl      *cluster.Cluster
-		clNodes []string = []string{}
-
 		wg      *sync.WaitGroup = &sync.WaitGroup{}
 		die     chan bool       = make(chan bool, 1)
 		pConfig string          = ctx.String("config")
 		pPipes  string          = ctx.String("pipes")
-		worker  *workers.Worker
 	)
 
 	doReload(pConfig, pPipes)
 
-	clEnabled := config.Instance().UBool("cluster.enabled", false)
-	if clEnabled {
-		for _, n := range config.Instance().UList("cluster.nodes") {
-			clNodes = append(clNodes, n.(string))
-		}
-		clEnabled = len(clNodes) > 0
-	}
-
-	worker = workers.NewWorker()
-
-	if clEnabled {
-		cl = cluster.NewCluster(worker, clNodes)
-	}
-
+	worker := getRunnable()
 	ch := make(chan os.Signal, 1)
 	signal.Notify(ch, os.Interrupt, syscall.SIGHUP)
 
@@ -93,24 +77,14 @@ func actionRun(ctx *cli.Context) (err error) {
 				logger.Instance().Info("Got SIGHUP. Will reload config and pipes")
 				doReload(pConfig, pPipes)
 
-				if cl != nil {
-					cl.Reload()
-				} else {
-					worker.Reload()
-				}
+				worker.Reload()
 			}
 		}
 	}()
 
-	wg.Add(1)
-
 	// Here be dragons
-	if cl != nil {
-		go cl.Run(wg, die)
-	} else {
-		go worker.Run(wg, die)
-	}
-
+	wg.Add(1)
+	go worker.Run(wg, die)
 	wg.Wait()
 
 	return nil
@@ -120,4 +94,28 @@ func actionRun(ctx *cli.Context) (err error) {
 func doReload(pConfig, pPipes string) {
 	config.Instance(pConfig)
 	_ = pipes.All(pPipes)
+}
+
+// Detects if kandalf should work in clustered mode or as
+// single node and returns corresponding runnable
+func getRunnable() (r runnable.Runnable) {
+	var clNodes []string = []string{}
+
+	clEnabled := config.Instance().UBool("cluster.enabled", false)
+
+	if clEnabled {
+		for _, n := range config.Instance().UList("cluster.nodes") {
+			clNodes = append(clNodes, n.(string))
+		}
+
+		clEnabled = len(clNodes) > 0
+	}
+
+	if clEnabled {
+		r = cluster.NewCluster(clNodes)
+	} else {
+		r = workers.NewWorker()
+	}
+
+	return r
 }

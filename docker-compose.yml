@@ -7,8 +7,8 @@ services:
       default:
         ipv4_address: 172.16.238.10
     volumes:
-      - "./build/out/linux:/app"
-      - "./build/resources/kandalf:/config"
+      - "./_build/out/linux:/app"
+      - "./_build/resources/kandalf:/config"
     links:
       - kafka
       - redis
@@ -20,8 +20,8 @@ services:
       default:
         ipv4_address: 172.16.238.11
     volumes:
-      - "./build/out/linux:/app"
-      - "./build/resources/kandalf:/config"
+      - "./_build/out/linux:/app"
+      - "./_build/resources/kandalf:/config"
     links:
       - kafka
       - redis
@@ -33,8 +33,8 @@ services:
       default:
         ipv4_address: 172.16.238.12
     volumes:
-      - "./build/out/linux:/app"
-      - "./build/resources/kandalf:/config"
+      - "./_build/out/linux:/app"
+      - "./_build/resources/kandalf:/config"
     links:
       - kafka
       - redis
@@ -55,7 +55,7 @@ services:
   rmq:
     image:          rabbitmq:3-management
     volumes:
-      - "./build/resources/rmq:/etc/rabbitmq/"
+      - "./_build/resources/rmq:/etc/rabbitmq/"
     ports:
       - "5672:5672"
       - "15672:15672"

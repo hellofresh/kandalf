@@ -22,12 +22,13 @@ type Cluster struct {
 	worker *workers.Worker
 }
 
-func NewCluster(worker *workers.Worker, clusterNodes []string) *Cluster {
+// Returns new clustered worker
+func NewCluster(clusterNodes []string) *Cluster {
 	var err error
 
 	// Cluster settings
 	clusterBindHost := config.Instance().UString("cluster.bind_host", "")
-	clusterBindPort := config.Instance().UInt("cluster.bind_port", 7946)
+	clusterBindPort := config.Instance().UInt("cluster.bind_port", 11291)
 	clusterDataDir := config.Instance().UString("cluster.data_dir", "/var/lib/kandalf")
 	clusterMaxPool := config.Instance().UInt("cluster.max_pool", 3)
 	clusterNbSnapshot := config.Instance().UInt("cluster.nb_snapshot", 2)
@@ -54,7 +55,11 @@ func NewCluster(worker *workers.Worker, clusterNodes []string) *Cluster {
 			Fatal("An error occured while resolving address")
 	}
 
-	snapshots, err := raft.NewFileSnapshotStore(clusterDataDir, clusterNbSnapshot, logger.Instance().Writer())
+	snapshots, err := raft.NewFileSnapshotStore(
+		clusterDataDir,
+		clusterNbSnapshot,
+		logger.Instance().Writer())
+
 	if err != nil {
 		logger.Instance().
 			WithError(err).
@@ -67,7 +72,7 @@ func NewCluster(worker *workers.Worker, clusterNodes []string) *Cluster {
 
 	// Create the log store and stable store.
 	boltPath := filepath.Join(clusterDataDir, "raft.db")
-	logStore, err := raftboltdb.NewBoltStore(boltPath)
+	boltStore, err := raftboltdb.NewBoltStore(boltPath)
 	if err != nil {
 		logger.Instance().
 			WithError(err).
@@ -75,7 +80,13 @@ func NewCluster(worker *workers.Worker, clusterNodes []string) *Cluster {
 			Fatal("An error occurred while creating BoltDB store")
 	}
 
-	transport, err := raft.NewTCPTransport(clusterBind, addr, clusterMaxPool, clusterTimeout, logger.Instance().Writer())
+	transport, err := raft.NewTCPTransport(
+		clusterBind,
+		addr,
+		clusterMaxPool,
+		clusterTimeout,
+		logger.Instance().Writer())
+
 	if err != nil {
 		logger.Instance().
 			WithError(err).
@@ -98,7 +109,7 @@ func NewCluster(worker *workers.Worker, clusterNodes []string) *Cluster {
 		cnf.DisableBootstrapAfterElect = false
 	}
 
-	ra, err := raft.NewRaft(cnf, newFsm(), logStore, logStore, snapshots, peerStore, transport)
+	ra, err := raft.NewRaft(cnf, newFsm(), boltStore, boltStore, snapshots, peerStore, transport)
 	if err != nil {
 		logger.Instance().
 			WithError(err).
@@ -107,7 +118,7 @@ func NewCluster(worker *workers.Worker, clusterNodes []string) *Cluster {
 
 	return &Cluster{
 		raft:   ra,
-		worker: worker,
+		worker: workers.NewWorker(),
 	}
 }
 

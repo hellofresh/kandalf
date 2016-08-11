@@ -74,9 +74,9 @@ deb: check build-linux
 		-C $(DIR_DEBIAN_TMP) \
 		-p $(DIR_OUT) \
 		--config-files   /etc/$(APP_NAME) \
-		--after-install  $(CURDIR)/build/debian/postinst \
-		--after-remove   $(CURDIR)/build/debian/postrm \
-		--deb-init       $(CURDIR)/build/debian/$(APP_NAME) \
+		--after-install  $(CURDIR)/_build/debian/postinst \
+		--after-remove   $(CURDIR)/_build/debian/postrm \
+		--deb-init       $(CURDIR)/_build/debian/$(APP_NAME) \
 		.
 	@rm -rf $(DIR_DEBIAN_TMP)
 

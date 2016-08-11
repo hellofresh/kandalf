@@ -87,14 +87,11 @@ docker-run:
 # Bootstrap and up docker environment (only for testing purposes)
 docker-up-env:
 	docker-compose stop
-	docker-compose rm --all --force
-	docker-compose up -d elasticsearch
+	docker-compose rm --force
 	docker-compose up -d kafka
-	docker-compose up -d kibana
-	docker-compose up -d logstash
 	docker-compose up -d redis
 	docker-compose up -d rmq
-	sleep 2
+	sleep 4
 	docker-compose exec rmq rabbitmqctl trace_on
 
 # Format the source code
@@ -103,7 +100,7 @@ fmt:
 
 # Run the program from CLI without compilation for testing purposes
 run:
-	go run -v $(MAIN_GO) -c=$(DIR_RESOURCES)/config.yml -p=$(DIR_RESOURCES)/pipes.yml
+	go run $(MAIN_GO) -c=$(DIR_RESOURCES)/config.yml -p=$(DIR_RESOURCES)/pipes.yml
 
 # Bootstrap vendoring tool and dependencies
 bootstrap:

@@ -1,22 +1,44 @@
-version: "2"
+# DO NOT USE IN PRODUCTION. THIS FILE IS ONLY FOR TESTING PURPOSES.
+version:            "2"
 services:
-  bridge:
+  kandalf_0:
     build:          .
-    container_name: bridge
-    command:        ./kandalf -c /config/config.yml -p /config/pipes.yml
+    networks:
+      default:
+        ipv4_address: 172.16.238.10
     volumes:
       - "./build/out/linux:/app"
-      - "./build/resources:/config"
+      - "./build/resources/kandalf:/config"
     links:
-      - logstash
       - kafka
       - redis
       - rmq
 
-  elasticsearch:
-    image:          elasticsearch:latest
-    ports:
-      - 9200:9200
+  kandalf_1:
+    build:          .
+    networks:
+      default:
+        ipv4_address: 172.16.238.11
+    volumes:
+      - "./build/out/linux:/app"
+      - "./build/resources/kandalf:/config"
+    links:
+      - kafka
+      - redis
+      - rmq
+
+  kandalf_2:
+    build:          .
+    networks:
+      default:
+        ipv4_address: 172.16.238.12
+    volumes:
+      - "./build/out/linux:/app"
+      - "./build/resources/kandalf:/config"
+    links:
+      - kafka
+      - redis
+      - rmq
 
   kafka:
     image:          spotify/kafka
@@ -24,25 +46,6 @@ services:
       - "9092:9092"
     environment:
       TOPICS:       "customer_subscription,customer_created,default"
-
-  kibana:
-    image:          kibana:latest
-    ports:
-      - "5601:5601"
-    environment:
-      - ELASTICSEARCH_URL=http://elasticsearch:9200
-    links:
-      - elasticsearch
-
-  logstash:
-    image:          logstash:latest
-    command:        logstash -f /etc/logstash/conf.d/logstash.conf
-    ports:
-      - "5000:5000"
-    volumes:
-      - "./build/resources/data/logstash/:/etc/logstash/conf.d/"
-    links:
-      - elasticsearch
 
   redis:
     image:          redis
@@ -52,7 +55,20 @@ services:
   rmq:
     image:          rabbitmq:3-management
     volumes:
-      - "./build/resources/data/rmq/:/etc/rabbitmq/"
+      - "./build/resources/rmq:/etc/rabbitmq/"
     ports:
       - "5672:5672"
       - "15672:15672"
+    environment:
+      RABBITMQ_DEFAULT_USER:  user
+      RABBITMQ_DEFAULT_PASS:  password
+
+# To hardcode ip addresses of kandalf containers
+networks:
+  default:
+    driver:       bridge
+    ipam:
+      driver:     default
+      config:
+      - subnet:   172.16.238.0/24
+        gateway:  172.16.238.1

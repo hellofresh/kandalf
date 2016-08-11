@@ -56,14 +56,24 @@ func newInternalQueue() (*internalQueue, error) {
 		return nil, fmt.Errorf("An error occured while instantiating producer: %v", err)
 	}
 
+	qFlushTimeout, err := time.ParseDuration(config.Instance().UString("queue.flush_timeout", "5s"))
+	if err != nil {
+		qFlushTimeout = 5 * time.Second
+	}
+
+	qRedisFlushTimeout, err := time.ParseDuration(config.Instance().UString("queue.redis.flush_timeout", "10s"))
+	if err != nil {
+		qRedisFlushTimeout = 10 * time.Second
+	}
+
 	return &internalQueue{
-		flushTimeout:   time.Duration(config.Instance().UInt("queue.flush_timeout", 5)) * time.Second,
+		flushTimeout:   qFlushTimeout,
 		maxSize:        config.Instance().UInt("queue.max_size", 10),
 		messages:       make([]internalMessage, 0),
 		mutex:          &sync.Mutex{},
 		producer:       producer,
 		rd:             rdClient,
-		rdFlushTimeout: time.Duration(config.Instance().UInt("queue.redis.flush_timeout", 10)) * time.Second,
+		rdFlushTimeout: qRedisFlushTimeout,
 		rdKeyName:      config.Instance().UString("queue.redis.key_name", "failed_messages"),
 	}, nil
 }

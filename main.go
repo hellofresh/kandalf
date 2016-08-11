@@ -9,6 +9,7 @@ import (
 
 	"github.com/urfave/cli"
 
+	"kandalf/cluster"
 	"kandalf/config"
 	"kandalf/logger"
 	"kandalf/pipes"
@@ -52,6 +53,9 @@ func main() {
 // Runs the application
 func actionRun(ctx *cli.Context) (err error) {
 	var (
+		cl      *cluster.Cluster
+		clNodes []string = []string{}
+
 		wg      *sync.WaitGroup = &sync.WaitGroup{}
 		die     chan bool       = make(chan bool, 1)
 		pConfig string          = ctx.String("config")
@@ -60,7 +64,20 @@ func actionRun(ctx *cli.Context) (err error) {
 	)
 
 	doReload(pConfig, pPipes)
+
+	clEnabled := config.Instance().UBool("cluster.enabled", false)
+	if clEnabled {
+		for _, n := range config.Instance().UList("cluster.nodes") {
+			clNodes = append(clNodes, n.(string))
+		}
+		clEnabled = len(clNodes) > 0
+	}
+
 	worker = workers.NewWorker()
+
+	if clEnabled {
+		cl = cluster.NewCluster(worker, clNodes)
+	}
 
 	ch := make(chan os.Signal, 1)
 	signal.Notify(ch, os.Interrupt, syscall.SIGHUP)
@@ -75,14 +92,25 @@ func actionRun(ctx *cli.Context) (err error) {
 			case syscall.SIGHUP:
 				logger.Instance().Info("Got SIGHUP. Will reload config and pipes")
 				doReload(pConfig, pPipes)
-				worker.Reload()
+
+				if cl != nil {
+					cl.Reload()
+				} else {
+					worker.Reload()
+				}
 			}
 		}
 	}()
 
-	// Here be dragons
 	wg.Add(1)
-	go worker.Run(wg, die)
+
+	// Here be dragons
+	if cl != nil {
+		go cl.Run(wg, die)
+	} else {
+		go worker.Run(wg, die)
+	}
+
 	wg.Wait()
 
 	return nil

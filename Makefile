@@ -6,7 +6,7 @@ GO_PROJECT_FILES=`go list -f '{{.Dir}}' ./... | grep -v /vendor/ | grep -v '$(AP
 GO_PROJECT_FILES+=$(MAIN_GO)
 
 # Useful directories
-DIR_BUILD=$(CURDIR)/build
+DIR_BUILD=$(CURDIR)/_build
 DIR_OUT=$(DIR_BUILD)/out
 DIR_OUT_LINUX=$(DIR_OUT)/linux
 DIR_DEBIAN_TMP=$(DIR_OUT)/deb

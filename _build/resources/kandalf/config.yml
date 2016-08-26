@@ -16,7 +16,7 @@ cluster:
   # Timeout of I/O deadlines (format: https://golang.org/pkg/time/#ParseDuration)
   timeout:              "10s"
 log:
-  level:                "debug"
+  level:                "info"
   # `file`, `logstash` or `syslog` available at the moment
   adapter:              "file"
   file:

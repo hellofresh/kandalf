@@ -14,12 +14,15 @@ import (
 
 	"kandalf/config"
 	"kandalf/logger"
+	"kandalf/runnable"
 	"kandalf/workers"
 )
 
 type Cluster struct {
-	raft   *raft.Raft
-	worker *workers.Worker
+	*runnable.RunnableWorker
+
+	raft  *raft.Raft
+	mutex *sync.Mutex
 }
 
 // Returns new clustered worker
@@ -116,36 +119,47 @@ func NewCluster(clusterNodes []string) *Cluster {
 			Fatal("An error occurred while instantiating raft")
 	}
 
-	return &Cluster{
-		raft:   ra,
-		worker: workers.NewWorker(),
+	c := &Cluster{
+		raft:  ra,
+		mutex: &sync.Mutex{},
 	}
+
+	c.RunnableWorker = runnable.NewRunnableWorker(c.doRun)
+
+	return c
 }
 
-func (cl *Cluster) Reload() {
-	cl.worker.Reload()
-}
+func (cl *Cluster) doRun(wgMain *sync.WaitGroup, dieMain chan bool) {
+	go cl.listenForLeadership(wgMain, dieMain)
 
-func (cl *Cluster) Run(wgMain *sync.WaitGroup, dieMain chan bool) {
-	defer wgMain.Done()
-	//wgMain.Add(1)
-
-	//go cl.worker.Run(wgMain, dieMain)
-
-	for {
-		select {
-		case <-dieMain:
-			return
-		default:
-		}
-
-		fmt.Println("Leader is ", cl.raft.Leader())
-
-		// Prevent CPU overload
+	for cl.RunnableWorker.IsWorking {
 		time.Sleep(config.InfiniteCycleTimeout)
 	}
 }
 
+// Here we're just listening for cluster state changes
+// If node becomes leader, we'll launch RabbitMQ consumer
+func (cl *Cluster) listenForLeadership(wgMain *sync.WaitGroup, dieMain chan bool) {
+	var (
+		becameLeader bool
+		worker       *workers.Worker
+	)
+
+	becameLeader = <-cl.raft.LeaderCh()
+
+	if becameLeader {
+		// Stop the old worker if it exists
+		if worker != nil {
+			worker.RunnableWorker.IsWorking = false
+			worker.IsWorking = false
+		}
+
+		worker = workers.NewWorker()
+		worker.Run(wgMain, dieMain)
+	}
+}
+
+// Returns first found IP address
 func getFirstLocalAddr() (result string, err error) {
 	ifaces, err := net.Interfaces()
 	if err != nil {

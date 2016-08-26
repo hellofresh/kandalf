@@ -11,10 +11,6 @@
   routed_queue:   "order*"
   priority:       2
 
-- topic:          "csi"
-  routing_key:    "csi.*"
-  priority:       2
-
 # Default topic for any message, but be careful with it
 # It's computed score can be greater than on other pipes, despite the `priority` value.
 # If message has `customers_us_new` in routing keys and something in `exchange_name`, it

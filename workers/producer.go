@@ -111,11 +111,15 @@ func getTopic(msg internalMessage, pipesList []pipes.Pipe) string {
 			}
 		}
 
-		if len(msg.RoutedQueues) > 0 && pipe.HasRoutedQueue && isAllKeysMatchPattern(msg.RoutedQueues, pipe.RoutedQueue) {
+		if len(msg.RoutedQueues) > 0 &&
+			pipe.HasRoutedQueue &&
+			isAllKeysMatchPattern(msg.RoutedQueues, pipe.RoutedQueue) {
 			scores[position].score += pipe.Priority + 1
 		}
 
-		if len(msg.RoutingKeys) > 0 && pipe.HasRoutingKey && isAllKeysMatchPattern(msg.RoutingKeys, pipe.RoutingKey) {
+		if len(msg.RoutingKeys) > 0 &&
+			pipe.HasRoutingKey &&
+			isAllKeysMatchPattern(msg.RoutingKeys, pipe.RoutingKey) {
 			scores[position].score += pipe.Priority + 1
 		}
 	}

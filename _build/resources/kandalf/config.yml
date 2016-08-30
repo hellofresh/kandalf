@@ -1,4 +1,20 @@
 ---
+cluster:
+  enabled:              true
+  nodes:
+    - "172.16.238.10:11291"
+    - "172.16.238.11:11291"
+    - "172.16.238.12:11291"
+  # Optional. If empty, first available system's network interface will be used
+  # Usefull with docker containers to bind not to "127.0.0.1", but to private network IP
+  # bind_host:            "172.16.238.9"
+  bind_port:            11291
+  data_dir:             "/var/lib/kandalf"
+  # How many connections in a pool
+  max_pool:             3
+  nb_snapshot:          2
+  # Timeout of I/O deadlines (format: https://golang.org/pkg/time/#ParseDuration)
+  timeout:              "10s"
 log:
   level:                "info"
   # `file`, `logstash` or `syslog` available at the moment
@@ -24,18 +40,16 @@ log:
     address:            "localhost:514"
 kafka:
   brokers:
-    # Docker
     - "kafka:9092"
   # The total number of times to retry sending a message.
   # Should be similar to the `message.send.max.retries` setting of the JVM producer.
   retry_max:            5
 rabbitmq:
   urls:
-    # Docker
-    - "amqp://rmq"
+    - "amqp://user:password@rmq"
 queue:
   # The pause between attempts to flush in-memory queue to kafka
-  flush_timeout:        5
+  flush_timeout:        "5s"
   # Max length of in-memory messages queue
   max_size:             10
   redis:
@@ -44,4 +58,4 @@ queue:
     # The name of the queue with failed messages
     key_name:           "failed_messages"
     # The pause between attempts to flush content of `queue.redis.key_name` to kafka
-    flush_timeout:      10
+    flush_timeout:      "10s"

@@ -8,17 +8,11 @@ import (
 
 	"kandalf/config"
 	"kandalf/logger"
+	"kandalf/runnable"
 )
 
-// The value of pause time to prevent CPU overload
-var infiniteCycleTimeout time.Duration = 2 * time.Second
-
 type Worker struct {
-	die       chan bool
-	reload    chan bool
-	mutex     *sync.Mutex
-	wg        *sync.WaitGroup
-	isWorking bool
+	*runnable.RunnableWorker
 }
 
 type internalWorker interface {
@@ -27,42 +21,14 @@ type internalWorker interface {
 
 // Returns new instance of worker
 func NewWorker() *Worker {
-	return &Worker{
-		die:    make(chan bool, 1),
-		reload: make(chan bool),
-		mutex:  &sync.Mutex{},
-		wg:     &sync.WaitGroup{},
-	}
-}
+	w := &Worker{}
+	w.RunnableWorker = runnable.NewRunnableWorker(w.doRun)
 
-// Main working cycle
-func (w *Worker) Run(wgMain *sync.WaitGroup, dieMain chan bool) {
-	defer wgMain.Done()
-
-	w.isWorking = true
-
-	go w.doRun()
-
-	for {
-		select {
-		case <-dieMain:
-			w.isWorking = false
-			return
-		default:
-		}
-
-		// Prevent CPU overload
-		time.Sleep(infiniteCycleTimeout)
-	}
-}
-
-// Reloads the worker
-func (w *Worker) Reload() {
-	w.reload <- true
+	return w
 }
 
 // Launches the internal workers and executes them infinitely
-func (w *Worker) doRun() {
+func (w *Worker) doRun(wgMain *sync.WaitGroup, dieMain chan bool) {
 	var (
 		die     chan bool
 		err     error
@@ -70,7 +36,7 @@ func (w *Worker) doRun() {
 		workers []internalWorker
 	)
 
-	for w.isWorking {
+	for w.RunnableWorker.IsWorking {
 		wg = &sync.WaitGroup{}
 		die = make(chan bool)
 		workers, err = w.getWorkers()
@@ -86,7 +52,7 @@ func (w *Worker) doRun() {
 		go func() {
 			for {
 				select {
-				case <-w.reload:
+				case <-w.RunnableWorker.ChReload:
 					logger.Instance().Info("Caught reload signal. Will stop all workers")
 
 					close(die)
@@ -96,7 +62,7 @@ func (w *Worker) doRun() {
 				}
 
 				// Prevent CPU overload
-				time.Sleep(infiniteCycleTimeout)
+				time.Sleep(config.InfiniteCycleTimeout)
 			}
 		}()
 

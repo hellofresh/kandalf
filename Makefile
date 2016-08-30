@@ -6,7 +6,7 @@ GO_PROJECT_FILES=`go list -f '{{.Dir}}' ./... | grep -v /vendor/ | grep -v '$(AP
 GO_PROJECT_FILES+=$(MAIN_GO)
 
 # Useful directories
-DIR_BUILD=$(CURDIR)/build
+DIR_BUILD=$(CURDIR)/_build
 DIR_OUT=$(DIR_BUILD)/out
 DIR_OUT_LINUX=$(DIR_OUT)/linux
 DIR_DEBIAN_TMP=$(DIR_OUT)/deb
@@ -74,9 +74,9 @@ deb: check build-linux
 		-C $(DIR_DEBIAN_TMP) \
 		-p $(DIR_OUT) \
 		--config-files   /etc/$(APP_NAME) \
-		--after-install  $(CURDIR)/build/debian/postinst \
-		--after-remove   $(CURDIR)/build/debian/postrm \
-		--deb-init       $(CURDIR)/build/debian/$(APP_NAME) \
+		--after-install  $(CURDIR)/_build/debian/postinst \
+		--after-remove   $(CURDIR)/_build/debian/postrm \
+		--deb-init       $(CURDIR)/_build/debian/$(APP_NAME) \
 		.
 	@rm -rf $(DIR_DEBIAN_TMP)
 
@@ -87,14 +87,11 @@ docker-run:
 # Bootstrap and up docker environment (only for testing purposes)
 docker-up-env:
 	docker-compose stop
-	docker-compose rm --all --force
-	docker-compose up -d elasticsearch
+	docker-compose rm --force
 	docker-compose up -d kafka
-	docker-compose up -d kibana
-	docker-compose up -d logstash
 	docker-compose up -d redis
 	docker-compose up -d rmq
-	sleep 2
+	sleep 4
 	docker-compose exec rmq rabbitmqctl trace_on
 
 # Format the source code
@@ -103,7 +100,7 @@ fmt:
 
 # Run the program from CLI without compilation for testing purposes
 run:
-	go run -v $(MAIN_GO) -c=$(DIR_RESOURCES)/config.yml -p=$(DIR_RESOURCES)/pipes.yml
+	go run $(MAIN_GO) -c=$(DIR_RESOURCES)/config.yml -p=$(DIR_RESOURCES)/pipes.yml
 
 # Bootstrap vendoring tool and dependencies
 bootstrap:

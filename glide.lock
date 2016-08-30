@@ -1,6 +1,10 @@
-hash: e590116c68cbba4a50a6067b45e895e7ee746c9ff58a28bf98638d4043722389
-updated: 2016-08-09T10:44:20.357366289+02:00
+hash: 5ae7611d3a3adf60ae66b45f6a883b0f084bf2284c5905a815454859a2284cfa
+updated: 2016-08-11T16:36:38.189588856+02:00
 imports:
+- name: github.com/armon/go-metrics
+  version: 3df31a1ada83e310c2e24b267c8e8b68836547b4
+- name: github.com/boltdb/bolt
+  version: 94c8db596809690a3f7046fa83c7b0dda13a3222
 - name: github.com/bshuster-repo/logrus-logstash-hook
   version: f8b7f00a4feb2088e5f7290f1c9360d1081ba0b5
 - name: github.com/davecgh/go-spew
@@ -14,9 +18,17 @@ imports:
 - name: github.com/eapache/go-xerial-snappy
   version: bb955e01b9346ac19dc29eb16586c90ded99a98c
 - name: github.com/eapache/queue
-  version: ded5959c0d4e360646dc9e9908cff48666781367
+  version: 44cc805cf13205b55f69e14bcb69867d1ae92f98
 - name: github.com/golang/snappy
   version: d9eb7a3d35ec988b8585d4a0068e462c27d28380
+- name: github.com/hashicorp/go-msgpack
+  version: fa3f63826f7c23912c15263591e65d54d080b458
+  subpackages:
+  - codec
+- name: github.com/hashicorp/raft
+  version: 37bf1111efb0c6ba96a9c0e92adb51c2f858996a
+- name: github.com/hashicorp/raft-boltdb
+  version: d1e82c1ec3f15ee991f7cc7ffd5b67ff6f5bbaee
 - name: github.com/klauspost/crc32
   version: 19b0b332c9e4516a6370a0456e6182c3b5036720
 - name: github.com/olebedev/config

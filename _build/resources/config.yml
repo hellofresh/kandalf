@@ -6,7 +6,7 @@ log:
   adapter:              "file"
   file:
     # Path to the file to write logs to
-    path:               "/var/log/kandalf.log"
+    path:               "/var/log/kandalf/debug.log"
     # The maximum number of days to retain old log files based on the timestamp encoded in their filename
     max_age:            0
     # The maximum number of old log files to retain

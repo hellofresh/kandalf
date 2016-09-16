@@ -1,9 +1,10 @@
 #!/bin/sh
-set -e
 
 if [ -x /bin/systemctl ]; then
   systemctl daemon-reload >/dev/null 2>&1 || true
 fi
+
+USER="kandalf"
 
 case "$1" in
   upgrade)
@@ -13,8 +14,9 @@ case "$1" in
     ;;
 
   remove|purge)
-    deluser kandalf
-    update-rc.d kandalf remove >/dev/null
+    update-rc.d kandalf remove -f >/dev/null
+    deluser ${USER} >/dev/null
+    delgroup ${USER} >/dev/null
     ;;
 
   failed-upgrade|abort-install|abort-upgrade|disappear)

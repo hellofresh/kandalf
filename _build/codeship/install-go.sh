@@ -2,7 +2,7 @@
 # This script is used only with Codeship to install latest Go
 
 # Download latest Go
-GO_VERSION=${GO_VERSION:="1.6.3"}
+GO_VERSION=${GO_VERSION:="1.7.1"}
 CLEANED_PATH=$(echo $PATH | sed -r 's|/(usr/local\|tmp)/go(/([0-9]\.)+[0-9])?/bin:||g')
 CACHED_DOWNLOAD="${HOME}/cache/go${GO_VERSION}.linux-amd64.tar.gz"
 

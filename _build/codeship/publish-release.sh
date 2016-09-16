@@ -25,4 +25,4 @@ github-release upload \
     --repo kandalf \
     --tag ${CI_BRANCH} \
     --name ${PKG_NAME} \
-    --file build/out/${PKG_NAME}
+    --file _build/out/${PKG_NAME}

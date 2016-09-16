@@ -15,10 +15,8 @@ import (
 )
 
 type internalMessage struct {
-	ExchangeName string          `json:"exchange_name"`
-	RoutedQueues []string        `json:"routed_queues"`
-	RoutingKeys  []string        `json:"routing_keys"`
-	Body         json.RawMessage `json:"body"`
+	Body  json.RawMessage `json:"body"`
+	Topic string          `json:"topic"`
 }
 
 type internalQueue struct {
@@ -128,9 +126,7 @@ func (q *internalQueue) add(msg internalMessage) {
 
 	logger.Instance().
 		WithFields(log.Fields{
-			"exchange_name": msg.ExchangeName,
-			"routed_queues": msg.RoutedQueues,
-			"routing_keys":  msg.RoutingKeys,
+			"topic": msg.Topic,
 		}).
 		Debug("Added message to internal queue")
 }

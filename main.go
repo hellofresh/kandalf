@@ -9,11 +9,9 @@ import (
 
 	"github.com/urfave/cli"
 
-	"kandalf/cluster"
 	"kandalf/config"
 	"kandalf/logger"
 	"kandalf/pipes"
-	"kandalf/runnable"
 	"kandalf/workers"
 )
 
@@ -62,7 +60,7 @@ func actionRun(ctx *cli.Context) error {
 
 	doReload(pConfig, pPipes)
 
-	worker := getRunnable()
+	worker := workers.NewWorker()
 	ch := make(chan os.Signal, 1)
 	signal.Notify(ch, os.Interrupt, syscall.SIGHUP)
 
@@ -94,28 +92,4 @@ func actionRun(ctx *cli.Context) error {
 func doReload(pConfig, pPipes string) {
 	config.Instance(pConfig)
 	_ = pipes.All(pPipes)
-}
-
-// Detects if kandalf should work in clustered mode or as
-// single node and returns corresponding runnable
-func getRunnable() (r runnable.Runnable) {
-	var clNodes []string = []string{}
-
-	clEnabled := config.Instance().UBool("cluster.enabled", false)
-
-	if clEnabled {
-		for _, n := range config.Instance().UList("cluster.nodes") {
-			clNodes = append(clNodes, n.(string))
-		}
-
-		clEnabled = len(clNodes) > 0
-	}
-
-	if clEnabled {
-		r = cluster.NewCluster(clNodes)
-	} else {
-		r = workers.NewWorker()
-	}
-
-	return r
 }

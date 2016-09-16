@@ -3,12 +3,9 @@ version:            "2"
 services:
   kandalf_0:
     build:          .
-    networks:
-      default:
-        ipv4_address: 172.16.238.10
     volumes:
       - "./_build/out/linux:/app"
-      - "./_build/resources/kandalf:/config"
+      - "./_build/resources:/config"
     links:
       - kafka
       - redis
@@ -16,12 +13,9 @@ services:
 
   kandalf_1:
     build:          .
-    networks:
-      default:
-        ipv4_address: 172.16.238.11
     volumes:
       - "./_build/out/linux:/app"
-      - "./_build/resources/kandalf:/config"
+      - "./_build/resources:/config"
     links:
       - kafka
       - redis
@@ -29,12 +23,9 @@ services:
 
   kandalf_2:
     build:          .
-    networks:
-      default:
-        ipv4_address: 172.16.238.12
     volumes:
       - "./_build/out/linux:/app"
-      - "./_build/resources/kandalf:/config"
+      - "./_build/resources:/config"
     links:
       - kafka
       - redis
@@ -45,7 +36,7 @@ services:
     ports:
       - "9092:9092"
     environment:
-      TOPICS:       "customer_subscription,customer_created,default"
+      TOPICS:       "new-orders,loyalty"
 
   redis:
     image:          redis
@@ -54,21 +45,9 @@ services:
 
   rmq:
     image:          rabbitmq:3-management
-    volumes:
-      - "./_build/resources/rmq:/etc/rabbitmq/"
     ports:
       - "5672:5672"
       - "15672:15672"
     environment:
       RABBITMQ_DEFAULT_USER:  user
       RABBITMQ_DEFAULT_PASS:  password
-
-# To hardcode ip addresses of kandalf containers
-networks:
-  default:
-    driver:       bridge
-    ipam:
-      driver:     default
-      config:
-      - subnet:   172.16.238.0/24
-        gateway:  172.16.238.1

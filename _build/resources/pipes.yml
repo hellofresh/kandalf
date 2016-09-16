@@ -1,0 +1,10 @@
+---
+- kafka_topic:            "new-orders"
+  rabbitmq_exchange_name: "customers"
+  rabbitmq_routing_key:   "order.created"
+  rabbitmq_queue_name:    "kandalf-customers-order.created"
+
+- kafka_topic:            "loyalty"
+  rabbitmq_exchange_name: "customers"
+  rabbitmq_routing_key:   "badge.received"
+  rabbitmq_queue_name:    "kandalf-customers-badge.received"

@@ -1,22 +1,7 @@
 ---
-cluster:
-  enabled:              true
-  nodes:
-    - "172.16.238.10:11291"
-    - "172.16.238.11:11291"
-    - "172.16.238.12:11291"
-  # Optional. If empty, first available system's network interface will be used
-  # Usefull with docker containers to bind not to "127.0.0.1", but to private network IP
-  # bind_host:            "172.16.238.9"
-  bind_port:            11291
-  data_dir:             "/var/lib/kandalf"
-  # How many connections in a pool
-  max_pool:             3
-  nb_snapshot:          2
-  # Timeout of I/O deadlines (format: https://golang.org/pkg/time/#ParseDuration)
-  timeout:              "10s"
 log:
-  level:                "info"
+  # Available options are: "debug", "info", "warning", "error", "fatal" and "panic"
+  level:                "debug"
   # `file`, `logstash` or `syslog` available at the moment
   adapter:              "file"
   file:
@@ -45,8 +30,7 @@ kafka:
   # Should be similar to the `message.send.max.retries` setting of the JVM producer.
   retry_max:            5
 rabbitmq:
-  urls:
-    - "amqp://user:password@rmq"
+  url:                  "amqp://user:password@rmq"
 queue:
   # The pause between attempts to flush in-memory queue to kafka
   flush_timeout:        "5s"

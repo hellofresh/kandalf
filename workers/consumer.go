@@ -4,24 +4,22 @@ import (
 	"sync"
 	"time"
 
+	log "github.com/Sirupsen/logrus"
 	"github.com/streadway/amqp"
 
 	"kandalf/config"
 	"kandalf/logger"
-)
-
-var (
-	exchangeName string = "amq.rabbitmq.trace"
-	routingKey   string = "publish.*"
+	"kandalf/pipes"
 )
 
 type internalConsumer struct {
 	con   *amqp.Connection
 	queue *internalQueue
+	pipe  pipes.Pipe
 }
 
 // Returns new instance of RabbitMQ consumer
-func newInternalConsumer(url string, queue *internalQueue) (*internalConsumer, error) {
+func newInternalConsumer(url string, queue *internalQueue, p pipes.Pipe) (*internalConsumer, error) {
 	con, err := amqp.Dial(url)
 	if err != nil {
 		return nil, err
@@ -30,6 +28,7 @@ func newInternalConsumer(url string, queue *internalQueue) (*internalConsumer, e
 	return &internalConsumer{
 		con:   con,
 		queue: queue,
+		pipe:  p,
 	}, nil
 }
 
@@ -46,7 +45,7 @@ func (c *internalConsumer) run(wg *sync.WaitGroup, die chan bool) {
 		return
 	}
 
-	err = ch.ExchangeDeclare(exchangeName, "topic", true, false, true, false, nil)
+	err = ch.ExchangeDeclare(c.pipe.RabbitmqExchangeName, "topic", true, false, false, false, nil)
 	if err != nil {
 		logger.Instance().
 			WithError(err).
@@ -55,7 +54,7 @@ func (c *internalConsumer) run(wg *sync.WaitGroup, die chan bool) {
 		return
 	}
 
-	q, err := ch.QueueDeclare("", false, true, false, true, nil)
+	q, err := ch.QueueDeclare(c.pipe.RabbitmqQueueName, false, true, false, true, nil)
 	if err != nil {
 		logger.Instance().
 			WithError(err).
@@ -64,7 +63,7 @@ func (c *internalConsumer) run(wg *sync.WaitGroup, die chan bool) {
 		return
 	}
 
-	err = ch.QueueBind(q.Name, routingKey, exchangeName, true, nil)
+	err = ch.QueueBind(q.Name, c.pipe.RabbitmqRoutingKey, c.pipe.RabbitmqExchangeName, true, nil)
 	if err != nil {
 		logger.Instance().
 			WithError(err).
@@ -80,6 +79,14 @@ func (c *internalConsumer) run(wg *sync.WaitGroup, die chan bool) {
 			Warning("Unable to start consume from the queue")
 
 		return
+	} else {
+		logger.Instance().
+			WithFields(log.Fields{
+				"exchange_name": c.pipe.RabbitmqExchangeName,
+				"queue_name":    c.pipe.RabbitmqQueueName,
+				"routing_key":   c.pipe.RabbitmqRoutingKey,
+			}).
+			Debug("Start consuming messages")
 	}
 
 	stopConsumer := make(chan bool)
@@ -89,7 +96,10 @@ func (c *internalConsumer) run(wg *sync.WaitGroup, die chan bool) {
 		var err error
 
 		for m := range msgs {
-			c.storeMessage(m)
+			c.queue.add(internalMessage{
+				Body:  m.Body,
+				Topic: c.pipe.KafkaTopic,
+			})
 		}
 
 		// Don't forget to close connection to RabbitMQ
@@ -120,29 +130,4 @@ func (c *internalConsumer) run(wg *sync.WaitGroup, die chan bool) {
 
 	logger.Instance().
 		Debug("Will stop consuming according to the signal came from Worker")
-}
-
-// Build the internal message and stores it in the queue
-func (c *internalConsumer) storeMessage(m amqp.Delivery) {
-	msg := internalMessage{
-		Body: m.Body,
-	}
-
-	if exchangeName, ok := m.Headers["exchange_name"]; ok {
-		msg.ExchangeName = exchangeName.(string)
-	}
-
-	if queues, ok := m.Headers["routed_queues"]; ok {
-		for _, queue := range queues.([]interface{}) {
-			msg.RoutedQueues = append(msg.RoutedQueues, queue.(string))
-		}
-	}
-
-	if keys, ok := m.Headers["routing_keys"]; ok {
-		for _, key := range keys.([]interface{}) {
-			msg.RoutingKeys = append(msg.RoutingKeys, key.(string))
-		}
-	}
-
-	c.queue.add(msg)
 }

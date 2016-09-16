@@ -8,11 +8,15 @@ import (
 
 	"kandalf/config"
 	"kandalf/logger"
-	"kandalf/runnable"
+	"kandalf/pipes"
 )
 
 type Worker struct {
-	*runnable.RunnableWorker
+	die       chan bool
+	reload    chan bool
+	mutex     *sync.Mutex
+	wg        *sync.WaitGroup
+	isWorking bool
 }
 
 type internalWorker interface {
@@ -21,14 +25,42 @@ type internalWorker interface {
 
 // Returns new instance of worker
 func NewWorker() *Worker {
-	w := &Worker{}
-	w.RunnableWorker = runnable.NewRunnableWorker(w.doRun)
+	return &Worker{
+		die:    make(chan bool, 1),
+		reload: make(chan bool),
+		mutex:  &sync.Mutex{},
+		wg:     &sync.WaitGroup{},
+	}
+}
 
-	return w
+// Main working cycle
+func (w *Worker) Run(wgMain *sync.WaitGroup, dieMain chan bool) {
+	defer wgMain.Done()
+
+	w.isWorking = true
+
+	go w.doRun()
+
+	for {
+		select {
+		case <-dieMain:
+			w.isWorking = false
+			return
+		default:
+		}
+
+		// Prevent CPU overload
+		time.Sleep(config.InfiniteCycleTimeout)
+	}
+}
+
+// Reloads the worker
+func (w *Worker) Reload() {
+	w.reload <- true
 }
 
 // Launches the internal workers and executes them infinitely
-func (w *Worker) doRun(wgMain *sync.WaitGroup, dieMain chan bool) {
+func (w *Worker) doRun() {
 	var (
 		die     chan bool
 		err     error
@@ -36,7 +68,7 @@ func (w *Worker) doRun(wgMain *sync.WaitGroup, dieMain chan bool) {
 		workers []internalWorker
 	)
 
-	for w.RunnableWorker.IsWorking {
+	for w.isWorking {
 		wg = &sync.WaitGroup{}
 		die = make(chan bool)
 		workers, err = w.getWorkers()
@@ -52,7 +84,7 @@ func (w *Worker) doRun(wgMain *sync.WaitGroup, dieMain chan bool) {
 		go func() {
 			for {
 				select {
-				case <-w.RunnableWorker.ChReload:
+				case <-w.reload:
 					logger.Instance().Info("Caught reload signal. Will stop all workers")
 
 					close(die)
@@ -77,8 +109,9 @@ func (w *Worker) doRun(wgMain *sync.WaitGroup, dieMain chan bool) {
 // Returns list of the internal workers
 func (w *Worker) getWorkers() (workers []internalWorker, err error) {
 	var (
-		c *internalConsumer
-		q *internalQueue
+		c      *internalConsumer
+		q      *internalQueue
+		rmqUrl string
 	)
 
 	q, err = newInternalQueue()
@@ -86,19 +119,22 @@ func (w *Worker) getWorkers() (workers []internalWorker, err error) {
 		return nil, fmt.Errorf("An error occured while instantiating queue: %v", err)
 	}
 
-	for _, url := range config.Instance().UList("rabbitmq.urls") {
-		c, err = newInternalConsumer(url.(string), q)
+	rmqUrl, err = config.Instance().String("rabbitmq.url")
+	if err != nil {
+		return nil, fmt.Errorf("Unable to get RabbitMQ connection URL: %v", err)
+	}
+
+	for _, pipe := range pipes.All() {
+		c, err = newInternalConsumer(rmqUrl, q, pipe)
 		if err != nil {
 			logger.Instance().
 				WithError(err).
-				WithField("url", url).
 				Warning("Unable to create consumer")
 		} else {
 			workers = append(workers, c)
 
 			logger.Instance().
 				WithError(err).
-				WithField("url", url).
 				Debug("Created a new consumer")
 		}
 	}

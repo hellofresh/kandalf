@@ -1,28 +1,15 @@
 package workers
 
 import (
-	"path"
-	"sort"
-
-	log "github.com/Sirupsen/logrus"
 	"gopkg.in/Shopify/sarama.v1"
 
 	"kandalf/config"
 	"kandalf/logger"
-	"kandalf/pipes"
 )
 
 type internalProducer struct {
-	client    sarama.SyncProducer
-	pipesList []pipes.Pipe
+	kafkaClient sarama.SyncProducer
 }
-
-type internalScore struct {
-	position int
-	score    int
-}
-
-type internalScoreList []internalScore
 
 // Returns new instance of kafka producer
 func newInternalProducer() (*internalProducer, error) {
@@ -47,114 +34,26 @@ func newInternalProducer() (*internalProducer, error) {
 	}
 
 	return &internalProducer{
-		client:    client,
-		pipesList: pipes.All(),
+		kafkaClient: client,
 	}, nil
 }
 
 // Sends message to the kafka
 func (p *internalProducer) handleMessage(msg internalMessage) (err error) {
-	topic := getTopic(msg, p.pipesList)
-	fields := log.Fields{
-		"exchange_name": msg.ExchangeName,
-		"routed_queues": msg.RoutedQueues,
-		"routing_keys":  msg.RoutingKeys,
-	}
+	_, _, err = p.kafkaClient.SendMessage(&sarama.ProducerMessage{
+		Topic: msg.Topic,
+		Value: sarama.ByteEncoder(msg.Body),
+	})
 
-	if len(topic) > 0 {
-		_, _, err = p.client.SendMessage(&sarama.ProducerMessage{
-			Topic: topic,
-			Value: sarama.ByteEncoder(msg.Body),
-		})
-
-		fields["topic"] = topic
-
-		if err == nil {
-			logger.Instance().
-				WithFields(fields).
-				Debug("Successfully sent message to kafka")
-		} else {
-			logger.Instance().
-				WithFields(fields).
-				Debug("An error occurred while sending message to kafka")
-		}
-	} else {
-		err = nil
-
+	if err == nil {
 		logger.Instance().
-			WithFields(fields).
-			Warning("Unable to find Kafka topic for message")
+			WithField("topic", msg.Topic).
+			Debug("Successfully sent message to kafka")
+	} else {
+		logger.Instance().
+			WithField("topic", msg.Topic).
+			Debug("An error occurred while sending message to kafka")
 	}
 
 	return err
 }
-
-// That's what this is all about.
-// Find the topic for a message, based on rules in pipes
-func getTopic(msg internalMessage, pipesList []pipes.Pipe) string {
-	var (
-		scores         internalScoreList = make(internalScoreList, len(pipesList))
-		pipeMatched    bool
-		pipeFound      bool
-		foundedPipeIdx int
-		nbScores       int
-	)
-
-	for position, pipe := range pipesList {
-		scores[position] = internalScore{position: position, score: 0}
-		nbScores++
-
-		if len(msg.ExchangeName) > 0 && pipe.HasExchangeName {
-			pipeMatched, _ = path.Match(pipe.ExchangeName, msg.ExchangeName)
-			if pipeMatched {
-				scores[position].score += pipe.Priority + 1
-			}
-		}
-
-		if len(msg.RoutedQueues) > 0 &&
-			pipe.HasRoutedQueue &&
-			isAllKeysMatchPattern(msg.RoutedQueues, pipe.RoutedQueue) {
-			scores[position].score += pipe.Priority + 1
-		}
-
-		if len(msg.RoutingKeys) > 0 &&
-			pipe.HasRoutingKey &&
-			isAllKeysMatchPattern(msg.RoutingKeys, pipe.RoutingKey) {
-			scores[position].score += pipe.Priority + 1
-		}
-	}
-
-	if nbScores > 0 {
-		sort.Sort(scores)
-
-		if (scores[0].score) > 0 {
-			pipeFound = true
-			foundedPipeIdx = scores[0].position
-		}
-	}
-
-	if pipeFound {
-		return pipesList[foundedPipeIdx].Topic
-	}
-
-	return ""
-}
-
-// Checks if all strings match the pattern
-func isAllKeysMatchPattern(keys []string, pattern string) bool {
-	var matched bool
-
-	for _, key := range keys {
-		matched, _ = path.Match(pattern, key)
-		if !matched {
-			return false
-		}
-	}
-
-	return true
-}
-
-// Methods to satisfy sort.Interface
-func (p internalScoreList) Len() int           { return len(p) }
-func (p internalScoreList) Less(i, j int) bool { return p[i].score > p[j].score }
-func (p internalScoreList) Swap(i, j int)      { p[i], p[j] = p[j], p[i] }

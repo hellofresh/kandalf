@@ -14,5 +14,3 @@ import:
 - package: gopkg.in/yaml.v2
 - package: gopkg.in/redis.v3
 - package: gopkg.in/natefinch/lumberjack.v2
-- package: github.com/hashicorp/raft
-- package: github.com/hashicorp/raft-boltdb

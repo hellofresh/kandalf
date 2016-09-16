@@ -3,22 +3,16 @@ package pipes
 import (
 	"io/ioutil"
 	"log"
-	"sort"
 	"sync"
 
 	"gopkg.in/yaml.v2"
 )
 
 type Pipe struct {
-	Topic        string `yaml:"topic"`
-	ExchangeName string `yaml:"exchange_name,omitempty"`
-	RoutedQueue  string `yaml:"routed_queue,omitempty"`
-	RoutingKey   string `yaml:"routing_key,omitempty"`
-	Priority     int    `yaml:"priority,omitempty"`
-
-	HasExchangeName bool
-	HasRoutedQueue  bool
-	HasRoutingKey   bool
+	KafkaTopic           string `yaml:"kafka_topic"`
+	RabbitmqExchangeName string `yaml:"rabbitmq_exchange_name"`
+	RabbitmqRoutingKey   string `yaml:"rabbitmq_routing_key"`
+	RabbitmqQueueName    string `yaml:"rabbitmq_queue_name"`
 }
 
 type PipesList []Pipe
@@ -52,18 +46,5 @@ func getPipes(path string) (pipes PipesList) {
 		log.Fatalf("Unable to parse pipes: %v", err)
 	}
 
-	for i, pipe := range pipes {
-		pipes[i].HasExchangeName = len(pipe.ExchangeName) > 0
-		pipes[i].HasRoutedQueue = len(pipe.RoutedQueue) > 0
-		pipes[i].HasRoutingKey = len(pipe.RoutingKey) > 0
-	}
-
-	sort.Sort(pipes)
-
 	return pipes
 }
-
-// Methods to satisfy sort.Interface
-func (slice PipesList) Len() int           { return len(slice) }
-func (slice PipesList) Less(i, j int) bool { return slice[i].Priority > slice[j].Priority }
-func (slice PipesList) Swap(i, j int)      { slice[i], slice[j] = slice[j], slice[i] }

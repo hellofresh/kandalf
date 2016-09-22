@@ -1,5 +1,5 @@
-hash: e590116c68cbba4a50a6067b45e895e7ee746c9ff58a28bf98638d4043722389
-updated: 2016-09-16T12:55:32.480912059+02:00
+hash: 23dd72cfbc85f3efade12646ed650ac4c9cc5db5af4d15ba19c8f7c3e4d070b9
+updated: 2016-09-21T10:38:41.204730962+02:00
 imports:
 - name: github.com/bshuster-repo/logrus-logstash-hook
   version: c5a17a5eb72da4c560f5e9bfb165180d9e681741
@@ -30,9 +30,11 @@ imports:
 - name: github.com/urfave/cli
   version: a14d7d367bc02b1f57d88de97926727f2d936387
 - name: golang.org/x/sys
-  version: 30de6d19a3bd89a5f38ae4028e23aaa5582648af
+  version: 8f0908ab3b2457e2e15403d3697c9ef5cb4b57a9
   subpackages:
   - unix
+- name: gopkg.in/alexcesaro/statsd.v2
+  version: 7fea3f0d2fab1ad973e641e51dba45443a311a90
 - name: gopkg.in/bsm/ratelimit.v1
   version: db14e161995a5177acef654cb0dd785e8ee8bc22
 - name: gopkg.in/natefinch/lumberjack.v2

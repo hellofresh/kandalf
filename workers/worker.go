@@ -109,12 +109,12 @@ func (w *Worker) doRun() {
 // Returns list of the internal workers
 func (w *Worker) getWorkers() (workers []internalWorker, err error) {
 	var (
-		c      *internalConsumer
-		q      *internalQueue
-		rmqUrl string
+		consumer *internalConsumer
+		queue    *internalQueue
+		rmqUrl   string
 	)
 
-	q, err = newInternalQueue()
+	queue, err = newInternalQueue()
 	if err != nil {
 		return nil, fmt.Errorf("An error occured while instantiating queue: %v", err)
 	}
@@ -125,13 +125,13 @@ func (w *Worker) getWorkers() (workers []internalWorker, err error) {
 	}
 
 	for _, pipe := range pipes.All() {
-		c, err = newInternalConsumer(rmqUrl, q, pipe)
+		consumer, err = newInternalConsumer(rmqUrl, queue, pipe)
 		if err != nil {
 			logger.Instance().
 				WithError(err).
 				Warning("Unable to create consumer")
 		} else {
-			workers = append(workers, c)
+			workers = append(workers, consumer)
 
 			logger.Instance().
 				WithError(err).
@@ -143,7 +143,7 @@ func (w *Worker) getWorkers() (workers []internalWorker, err error) {
 		return nil, errors.New("Haven't found any consumer or all of them failed to connect")
 	}
 
-	workers = append(workers, q)
+	workers = append(workers, queue)
 
 	return workers, nil
 }

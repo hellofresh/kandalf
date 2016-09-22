@@ -12,6 +12,7 @@ import (
 
 	"kandalf/config"
 	"kandalf/logger"
+	"kandalf/statsd"
 )
 
 type internalMessage struct {
@@ -124,6 +125,8 @@ func (q *internalQueue) add(msg internalMessage) {
 
 	q.messages = append(q.messages, msg)
 
+	statsd.Instance().Increment("internal-queue.new-messages")
+
 	logger.Instance().
 		WithFields(log.Fields{
 			"topic": msg.Topic,
@@ -163,12 +166,16 @@ func (q *internalQueue) handleMessages() {
 		// If it is not possible to store message even in redis,
 		// we'll put the message into memory and process it later
 		if err != nil {
+			statsd.Instance().Increment("redis.failed-messages")
+
 			failedMessages = append(failedMessages, msg)
 
 			logger.Instance().
 				WithError(err).
 				Warning("Unable to store message in Redis")
 		} else {
+			statsd.Instance().Increment("redis.new-messages")
+
 			logger.Instance().Debug("Successfully stored message in Redis")
 		}
 	}

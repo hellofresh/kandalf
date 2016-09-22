@@ -5,6 +5,7 @@ import (
 
 	"kandalf/config"
 	"kandalf/logger"
+	"kandalf/statsd"
 )
 
 type internalProducer struct {
@@ -46,10 +47,14 @@ func (p *internalProducer) handleMessage(msg internalMessage) (err error) {
 	})
 
 	if err == nil {
+		statsd.Instance().Increment("kafka.new-messages")
+
 		logger.Instance().
 			WithField("topic", msg.Topic).
 			Debug("Successfully sent message to kafka")
 	} else {
+		statsd.Instance().Increment("kafka.failed-messages")
+
 		logger.Instance().
 			WithField("topic", msg.Topic).
 			Debug("An error occurred while sending message to kafka")

@@ -44,7 +44,7 @@ case "$1" in
         ${0} start
         ;;
     reload)
-        cat $PIDFILE | xarg kill -SIGHUP
+        cat $PIDFILE | xargs kill -SIGHUP
         ;;
     *)
         echo "Usage: /etc/init.d/$NAME {start|stop|restart|reload}" >&2

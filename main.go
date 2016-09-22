@@ -12,6 +12,7 @@ import (
 	"kandalf/config"
 	"kandalf/logger"
 	"kandalf/pipes"
+	"kandalf/statsd"
 	"kandalf/workers"
 )
 
@@ -90,6 +91,7 @@ func actionRun(ctx *cli.Context) error {
 
 // Reloads configuration and lists of available pipes
 func doReload(pConfig, pPipes string) {
-	config.Instance(pConfig)
+	cnf := config.Instance(pConfig)
 	_ = pipes.All(pPipes)
+	_ = statsd.Instance(cnf)
 }

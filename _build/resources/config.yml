@@ -29,8 +29,6 @@ kafka:
   # The total number of times to retry sending a message.
   # Should be similar to the `message.send.max.retries` setting of the JVM producer.
   retry_max:            5
-rabbitmq:
-  url:                  "amqp://user:password@rmq"
 queue:
   # The pause between attempts to flush in-memory queue to kafka
   flush_timeout:        "5s"
@@ -43,3 +41,8 @@ queue:
     key_name:           "failed_messages"
     # The pause between attempts to flush content of `queue.redis.key_name` to kafka
     flush_timeout:      "10s"
+rabbitmq:
+  url:                  "amqp://user:password@rmq"
+statsd:
+  address:              ""
+  prefix:               "kandalf"

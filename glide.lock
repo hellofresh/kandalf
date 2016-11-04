@@ -1,5 +1,5 @@
-hash: 23dd72cfbc85f3efade12646ed650ac4c9cc5db5af4d15ba19c8f7c3e4d070b9
-updated: 2016-09-21T10:38:41.204730962+02:00
+hash: 7e601287ec17cc30e0da65057cb756a7f29d8852f83634db7157bb6d05f69d16
+updated: 2016-11-03T18:06:41.403098823+01:00
 imports:
 - name: github.com/bshuster-repo/logrus-logstash-hook
   version: c5a17a5eb72da4c560f5e9bfb165180d9e681741

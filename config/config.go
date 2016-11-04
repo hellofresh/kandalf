@@ -4,9 +4,8 @@ import (
 	"log"
 	"sync"
 
+	l "github.com/hellofresh/kandalf/logger"
 	c "github.com/olebedev/config"
-
-	l "kandalf/logger"
 )
 
 var (

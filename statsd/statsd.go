@@ -3,10 +3,9 @@ package statsd
 import (
 	"sync"
 
+	log "github.com/hellofresh/kandalf/logger"
 	"github.com/olebedev/config"
 	s "gopkg.in/alexcesaro/statsd.v2"
-
-	log "kandalf/logger"
 )
 
 var (

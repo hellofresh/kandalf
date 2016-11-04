@@ -6,9 +6,9 @@ import (
 	"sync"
 	"time"
 
-	"kandalf/config"
-	"kandalf/logger"
-	"kandalf/pipes"
+	"github.com/hellofresh/kandalf/config"
+	"github.com/hellofresh/kandalf/logger"
+	"github.com/hellofresh/kandalf/pipes"
 )
 
 type Worker struct {

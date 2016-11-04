@@ -8,11 +8,10 @@ import (
 	"time"
 
 	log "github.com/Sirupsen/logrus"
+	"github.com/hellofresh/kandalf/config"
+	"github.com/hellofresh/kandalf/logger"
+	"github.com/hellofresh/kandalf/statsd"
 	"gopkg.in/redis.v3"
-
-	"kandalf/config"
-	"kandalf/logger"
-	"kandalf/statsd"
 )
 
 type internalMessage struct {

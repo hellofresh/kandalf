@@ -5,11 +5,10 @@ import (
 	"time"
 
 	log "github.com/Sirupsen/logrus"
+	"github.com/hellofresh/kandalf/config"
+	"github.com/hellofresh/kandalf/logger"
+	"github.com/hellofresh/kandalf/pipes"
 	"github.com/streadway/amqp"
-
-	"kandalf/config"
-	"kandalf/logger"
-	"kandalf/pipes"
 )
 
 type internalConsumer struct {

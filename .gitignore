@@ -1,4 +1,5 @@
 *.iml
 .idea/
 _build/out/*
+out/*
 vendor/

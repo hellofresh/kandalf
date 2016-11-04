@@ -13,9 +13,7 @@ sed -i -e "s/%app.version%/${VERSION}/g" cmd/kandalf/main.go
 
 make bootstrap
 make build-linux
-go get github.com/aktau/github-release
 
 popd
 
-cp ${GOPATH}/${PROJECT_SRC}/out/linux/kandalf ./artifacts/
-cp ${GOPATH}/bin/github-release ./artifacts/
+cp ${GOPATH}/${PROJECT_SRC}/out/linux/kandalf ./build/

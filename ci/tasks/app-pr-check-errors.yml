@@ -8,10 +8,7 @@ image_resource:
     tag:        "1.7"
 
 run:
-  path:         app-master/ci/scripts/build-linux.sh
-
-outputs:
-  - name:       build
+  path:         app-pr/ci/scripts/check-errors.sh
 
 inputs:
-  - name:       app-master
+  - name:       app-pr

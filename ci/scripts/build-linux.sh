@@ -4,9 +4,9 @@ set -e -u -x
 
 pushd .
 
-. "`dirname "$0"`/_bootstrap.sh"
+VERSION=$(cat ./semantic-version/version)
 
-VERSION="0.0.1"
+. "`dirname "$0"`/_bootstrap.sh"
 
 # Change the app version
 sed -i -e "s/%app.version%/${VERSION}/g" cmd/kandalf/main.go

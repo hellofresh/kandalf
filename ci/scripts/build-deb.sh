@@ -35,7 +35,3 @@ fpm -n ${APP_NAME} \
     .
 
 rm -rf ${DIR_DEBIAN_TMP}
-
-# Upload package to a github
-#echo "Package uploaded"
-echo ${VERSION} > ${DIR_ARTIFACTS}/version

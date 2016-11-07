@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-set -e -u -x
+set -e -u
 
 # Define variables
 APP_NAME="kandalf"

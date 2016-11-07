@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-set -e -u -x
+set -e -u
 
 . "`dirname "$0"`/_bootstrap.sh"
 

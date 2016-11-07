@@ -10,7 +10,7 @@ resources:
     type:               git
     source:
       uri:              {{repo_uri}}
-      branch:           master
+      branch:           feature/concourse
 
   - name:               app-pr
     type:               pull-request
@@ -66,6 +66,17 @@ jobs:
         params:
           PROJECT_SRC:  {{project_src}}
           RESOURCE:     app-master
+
+  - name:               Clear old release candidates
+    plan:
+      - get:            app-master
+        trigger:        true
+
+      - task:           Removing old release candidates
+        file:           app-master/ci/tasks/clear-draft-releases.yml
+        params:
+          GITHUB_TOKEN: {{github_token}}
+          MAX_RELEASES: 20
 
   - name:               Build artifact from master
     plan:

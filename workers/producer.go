@@ -1,11 +1,10 @@
 package workers
 
 import (
+	"github.com/hellofresh/kandalf/config"
+	"github.com/hellofresh/kandalf/logger"
+	"github.com/hellofresh/kandalf/statsd"
 	"gopkg.in/Shopify/sarama.v1"
-
-	"kandalf/config"
-	"kandalf/logger"
-	"kandalf/statsd"
 )
 
 type internalProducer struct {

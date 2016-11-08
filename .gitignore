@@ -1,4 +1,6 @@
 *.iml
 .idea/
+.vpass
 _build/out/*
+out/*
 vendor/

@@ -1,0 +1,128 @@
+---
+resource_types:
+  - name:               pull-request
+    type:               docker-image
+    source:
+      repository:       jtarchie/pr
+
+resources:
+  - name:               app-master
+    type:               git
+    source:
+      uri:              {{repo_uri}}
+      branch:           feature/concourse
+
+  - name:               app-pr
+    type:               pull-request
+    source:
+      uri:              {{repo_uri}}
+      repo:             hellofresh/kandalf
+      access_token:     {{github_token}}
+
+  - name:               gh-release-rc
+    type:               github-release
+    source:
+      user:             hellofresh
+      repository:       kandalf
+      access_token:     {{github_token}}
+      pre_release:      true
+      release:          false
+
+  - name:               gh-release-final
+    type:               github-release
+    source:
+      user:             hellofresh
+      repository:       kandalf
+      access_token:     {{github_token}}
+
+  - name:               semantic-version
+    type:               semver
+    source:
+      driver:           git
+      initial_version:  0.0.0-rc.1
+      uri:              {{repo_uri}}
+      branch:           version
+      file:             version
+
+jobs:
+  - name:               Check PR for errors
+    plan:
+      - get:            app-pr
+        trigger: true
+
+      - task:           Check for unchecked errors and suspicious constructs
+        file:           app-pr/ci/tasks/app-pr-check-errors.yml
+        params:
+          PROJECT_SRC:  {{project_src}}
+          RESOURCE:     app-pr
+
+  - name:               Check master branch for errors
+    plan:
+      - get:            app-master
+        trigger:        true
+
+      - task:           Check for unchecked errors and suspicious constructs
+        file:           app-master/ci/tasks/app-master-check-errors.yml
+        params:
+          PROJECT_SRC:  {{project_src}}
+          RESOURCE:     app-master
+
+  - name:               Clear old release candidates
+    plan:
+      - get:            app-master
+        trigger:        true
+
+      - task:           Removing old release candidates
+        file:           app-master/ci/tasks/clear-draft-releases.yml
+        params:
+          GITHUB_TOKEN: {{github_token}}
+          MAX_RELEASES: 20
+
+  - name:               Build artifact from master
+    plan:
+      - get:            app-master
+        trigger:        true
+        passed:
+          - "Check master branch for errors"
+
+      - put:            semantic-version
+        params:
+          pre:          rc
+
+      - task:           Build linux binary
+        file:           app-master/ci/tasks/build-linux.yml
+        params:
+          PROJECT_SRC:  {{project_src}}
+          RESOURCE:     app-master
+
+      - task:           Build DEB package
+        file:           app-master/ci/tasks/build-deb.yml
+        params:
+          RESOURCE:     app-master
+
+      - put:            gh-release-rc
+        params:
+          name:         semantic-version/version
+          tag :         semantic-version/version
+          globs:
+            - artifacts/*.deb
+
+  - name:               Promote a release
+    plan:
+      - get:            gh-release-rc
+
+      - put:            semantic-version
+        params:
+          bump:         final
+
+      - put:            gh-release-final
+        params:
+          globs:
+            - gh-release-rc/*.deb
+          name:         semantic-version/version
+          tag:          semantic-version/version
+
+      - put:            semantic-version
+        params:
+          bump:         patch
+          pre:          rc

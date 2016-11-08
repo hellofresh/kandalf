@@ -1,0 +1,14 @@
+---
+platform:       linux
+
+image_resource:
+  type:         docker-image
+  source:
+    repository: golang
+    tag:        "1.7"
+
+run:
+  path:         app-pr/ci/scripts/check-errors.sh
+
+inputs:
+  - name:       app-pr

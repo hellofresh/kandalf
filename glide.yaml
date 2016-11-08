@@ -1,4 +1,4 @@
-package: kandalf
+package: github.com/hellofresh/kandalf
 import:
 - package: github.com/Sirupsen/logrus
   version: ^0.10.0

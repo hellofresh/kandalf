@@ -9,11 +9,11 @@ import (
 
 	"github.com/urfave/cli"
 
-	"kandalf/config"
-	"kandalf/logger"
-	"kandalf/pipes"
-	"kandalf/statsd"
-	"kandalf/workers"
+	"github.com/hellofresh/kandalf/config"
+	"github.com/hellofresh/kandalf/logger"
+	"github.com/hellofresh/kandalf/pipes"
+	"github.com/hellofresh/kandalf/statsd"
+	"github.com/hellofresh/kandalf/workers"
 )
 
 // Instantiates new application and launches it

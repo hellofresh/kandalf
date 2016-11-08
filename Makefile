@@ -1,98 +1,75 @@
 GO_LINKER_FLAGS=-ldflags="-s -w"
 
 APP_NAME=kandalf
-MAIN_GO=$(CURDIR)/main.go
-GO_PROJECT_FILES=`go list -f '{{.Dir}}' ./... | grep -v /vendor/ | grep -v '$(APP_NAME)$$'`
-GO_PROJECT_FILES+=$(MAIN_GO)
+APP_SRC=$(CURDIR)/cmd/kandalf/main.go
+
+GO_PROJECT_FILES=`go list -f '{{.Dir}}' ./... | grep -v /vendor/`
+GO_PROJECT_PACKAGES=`go list ./... | grep -v /vendor/`
 
 # Useful directories
-DIR_BUILD=$(CURDIR)/_build
-DIR_OUT=$(DIR_BUILD)/out
+DIR_OUT=$(CURDIR)/out
 DIR_OUT_LINUX=$(DIR_OUT)/linux
-DIR_DEBIAN_TMP=$(DIR_OUT)/deb
-DIR_RESOURCES=$(DIR_BUILD)/resources
-
-# Remove the "v" prefix from version
-VERSION=`$(DIR_OUT_LINUX)/$(APP_NAME) -v | cut -d ' ' -f 3 | tr -d 'v'`
+DIR_RESOURCES=$(CURDIR)/ci/resources
+DOCKER_COMPOSE_FILE=$(CURDIR)/docker-compose.test.yml
 
 EXTERNAL_TOOLS=\
 	github.com/kisielk/errcheck \
 	github.com/Masterminds/glide
 
-# Check for suspicious constructs
 .vet:
+	@echo "Checking for suspicious constructs"
 	@for project_file in $(GO_PROJECT_FILES); do \
 		go tool vet $$project_file; \
-		if [ $$? -eq 1 ]; then \
+		if [ $$? -ne 0 ]; then \
 			echo ""; \
 			echo "Vet found suspicious constructs. Please check the reported constructs"; \
 			echo "and fix them if necessary."; \
+			exit 1;\
 		fi \
 	done
 
-# Check the go files for unchecked errors
 .errcheck:
+	@echo "Checking the go files for unchecked errors"
 	@for project_file in $(GO_PROJECT_FILES); do \
 		if [ -f $$project_file ]; then \
 			errcheck $$project_file; \
 		else \
 			errcheck $$(find $$project_file -type f); \
 		fi; \
-		if [ $$? -eq 1 ]; then \
+		if [ $$? -ne 0 ]; then \
 			echo ""; \
 			echo "Found not handled returning errors. Please check them and fix if necessary."; \
+			exit 1;\
 		fi \
 	done
 
 # Default make target
-build: check build-linux build-osx
+build: build-linux build-osx
 
 build-linux:
 	@echo Build Linux amd64
-	@env GOOS=linux GOARCH=amd64 go build -o $(DIR_OUT_LINUX)/$(APP_NAME) $(GO_LINKER_FLAGS) $(MAIN_GO)
+	@env GOOS=linux GOARCH=amd64 go build -o $(DIR_OUT_LINUX)/$(APP_NAME) $(GO_LINKER_FLAGS) $(APP_SRC)
 
 build-osx:
 	@echo Build OSX amd64
-	@env GOOS=darwin GOARCH=amd64 go build -o $(DIR_OUT)/darwin/$(APP_NAME) $(GO_LINKER_FLAGS) $(MAIN_GO)
+	@env GOOS=darwin GOARCH=amd64 go build -o $(DIR_OUT)/darwin/$(APP_NAME) $(GO_LINKER_FLAGS) $(APP_SRC)
 
 # Launch all checks
 check: .vet .errcheck
 
-# Build deb-package with Effing Package Management (https://github.com/jordansissel/fpm)
-deb: check build-linux
-	@echo Build debian package
-	@mkdir $(DIR_DEBIAN_TMP)
-	@mkdir -p $(DIR_DEBIAN_TMP)/etc/$(APP_NAME)
-	@mkdir -p $(DIR_DEBIAN_TMP)/usr/local/bin
-	@install -m 644 $(DIR_RESOURCES)/config.yml $(DIR_DEBIAN_TMP)/etc/$(APP_NAME)/config.yml
-	@install -m 644 $(DIR_RESOURCES)/pipes.yml $(DIR_DEBIAN_TMP)/etc/$(APP_NAME)/pipes.yml
-	@install -m 755 $(DIR_OUT_LINUX)/$(APP_NAME) $(DIR_DEBIAN_TMP)/usr/local/bin
-	fpm -n $(APP_NAME) \
-		-v $(VERSION) \
-		-t deb \
-		-s dir \
-		-C $(DIR_DEBIAN_TMP) \
-		-p $(DIR_OUT) \
-		--config-files   /etc/$(APP_NAME) \
-		--after-install  $(CURDIR)/_build/debian/postinst \
-		--after-remove   $(CURDIR)/_build/debian/postrm \
-		--deb-init       $(CURDIR)/_build/debian/$(APP_NAME) \
-		.
-	@rm -rf $(DIR_DEBIAN_TMP)
-
 # Run the application in docker (only for testing purposes)
 docker-run:
-	docker-compose up bridge
+	docker-compose -f $(DOCKER_COMPOSE_FILE) up bridge
 
 # Bootstrap and up docker environment (only for testing purposes)
 docker-up-env:
-	docker-compose stop
-	docker-compose rm --force
-	docker-compose up -d kafka
-	docker-compose up -d redis
-	docker-compose up -d rmq
+	docker-compose -f $(DOCKER_COMPOSE_FILE) stop
+	docker-compose -f $(DOCKER_COMPOSE_FILE) rm --force
+	docker-compose -f $(DOCKER_COMPOSE_FILE) up -d kafka
+	docker-compose -f $(DOCKER_COMPOSE_FILE) up -d redis
+	docker-compose -f $(DOCKER_COMPOSE_FILE) up -d rmq
 	sleep 4
-	docker-compose exec rmq rabbitmqctl trace_on
+	docker-compose -f $(DOCKER_COMPOSE_FILE) exec rmq rabbitmqctl trace_on
 
 # Format the source code
 fmt:
@@ -100,7 +77,7 @@ fmt:
 
 # Run the program from CLI without compilation for testing purposes
 run:
-	go run $(MAIN_GO) -c=$(DIR_RESOURCES)/config.yml -p=$(DIR_RESOURCES)/pipes.yml
+	go run $(APP_SRC) -c=$(DIR_RESOURCES)/config.yml -p=$(DIR_RESOURCES)/pipes.yml
 
 # Bootstrap vendoring tool and dependencies
 bootstrap:
@@ -112,4 +89,4 @@ bootstrap:
 
 # Launch tests
 test:
-	@go test `go list ./... | grep -v /vendor/ | grep -v '$(APP_NAME)$$'`
+	@go test $(GO_PROJECT_PACKAGES)

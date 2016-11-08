@@ -10,7 +10,7 @@ resources:
     type:               git
     source:
       uri:              {{repo_uri}}
-      branch:           feature/concourse
+      branch:           master
 
   - name:               app-pr
     type:               pull-request

@@ -1,7 +1,9 @@
 ---
-- kafka_topic:            "new-orders"
-  rabbitmq_exchange_name: "customers"
-  rabbitmq_routing_key:   "order.created"
+- rabbitmq_exchange_name: "customers"     # Message from that RabbitMQ exchange
+  rabbitmq_routing_key:   "order.created" # With that routing key
+  kafka_topic:            "new-orders"    # Will be placed to that kafka topic
+  # The queue name can be whatever you want, just keep it unique within pipes.
+  # If you launch multiple kandalf instances they all will consume messages from that queue.
   rabbitmq_queue_name:    "kandalf-customers-order.created"
 
 - kafka_topic:            "loyalty"

@@ -43,6 +43,7 @@ queue:
     flush_timeout:      "10s"
 rabbitmq:
   url:                  "amqp://user:password@rmq"
+# kandalf can send certain metrics to statsd, leave address empty if you don't need it
 statsd:
   address:              ""
   prefix:               "kandalf"

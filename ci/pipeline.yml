@@ -50,11 +50,29 @@ jobs:
       - get:            app-pr
         trigger: true
 
+      - put:            app-pr
+        params:
+          path:         app-pr
+          context:      test
+          status:       pending
+
       - task:           Check for unchecked errors and suspicious constructs
         file:           app-pr/ci/tasks/app-pr-check-errors.yml
         params:
           PROJECT_SRC:  {{project_src}}
           RESOURCE:     app-pr
+        on_success:
+          put:          app-pr
+          params:
+            path:       app-pr
+            context:    test
+            status:     success
+        on_failure:
+          put:          app-pr
+          params:
+            path:       app-pr
+            context:    test
+            status:     failure
 
   - name:               Check master branch for errors
     plan:

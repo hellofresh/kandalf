@@ -55,6 +55,7 @@ func (p *internalProducer) handleMessage(msg internalMessage) (err error) {
 		statsd.Instance().Increment("kafka.failed-messages")
 
 		logger.Instance().
+			WithError(err).
 			WithField("topic", msg.Topic).
 			Debug("An error occurred while sending message to kafka")
 	}

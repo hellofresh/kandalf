@@ -14,7 +14,6 @@ import (
 type Worker struct {
 	die       chan bool
 	reload    chan bool
-	mutex     *sync.Mutex
 	wg        *sync.WaitGroup
 	isWorking bool
 }
@@ -28,7 +27,6 @@ func NewWorker() *Worker {
 	return &Worker{
 		die:    make(chan bool, 1),
 		reload: make(chan bool),
-		mutex:  &sync.Mutex{},
 		wg:     &sync.WaitGroup{},
 	}
 }

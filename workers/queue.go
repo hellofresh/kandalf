@@ -8,10 +8,13 @@ import (
 	"time"
 
 	log "github.com/Sirupsen/logrus"
-	"github.com/hellofresh/kandalf/config"
-	"github.com/hellofresh/kandalf/logger"
-	"github.com/hellofresh/kandalf/statsd"
+	"github.com/hellofresh/kandalf/pkg/config"
+	"github.com/hellofresh/stats-go"
 	"gopkg.in/redis.v3"
+)
+
+const (
+	statsQueueSection = "queue"
 )
 
 type internalMessage struct {
@@ -20,59 +23,37 @@ type internalMessage struct {
 }
 
 type internalQueue struct {
-	flushTimeout   time.Duration
-	isWorking      bool
-	maxSize        int
-	messages       []internalMessage
-	mutex          *sync.Mutex
-	producer       *internalProducer
-	rd             *redis.Client
-	rdFlushTimeout time.Duration
-	rdKeyName      string
+	isWorking   bool
+	messages    []internalMessage
+	mutex       sync.Mutex
+	producer    *internalProducer
+	rd          *redis.Client
+	statsClient stats.StatsClient
+	redisConfig config.RedisConfig
 }
 
 // Returns new instance of queue
-func newInternalQueue() (*internalQueue, error) {
+func newInternalQueue(globalConfig config.GlobalConfig, statsClient stats.StatsClient) (*internalQueue, error) {
 	var err error
 
-	rdAddr, err := config.Instance().String("queue.redis.address")
-	if err != nil {
-		return nil, err
-	}
-
-	rdClient := redis.NewClient(&redis.Options{
-		Addr: rdAddr,
-	})
+	rdClient := redis.NewClient(&redis.Options{Addr: globalConfig.Redis.Address})
 
 	_, err = rdClient.Ping().Result()
 	if err != nil {
 		return nil, err
 	}
 
-	producer, err := newInternalProducer()
+	producer, err := newInternalProducer(globalConfig.Kafka, statsClient)
 	if err != nil {
 		return nil, fmt.Errorf("An error occured while instantiating producer: %v", err)
 	}
 
-	qFlushTimeout, err := time.ParseDuration(config.Instance().UString("queue.flush_timeout", "5s"))
-	if err != nil {
-		qFlushTimeout = 5 * time.Second
-	}
-
-	qRedisFlushTimeout, err := time.ParseDuration(config.Instance().UString("queue.redis.flush_timeout", "10s"))
-	if err != nil {
-		qRedisFlushTimeout = 10 * time.Second
-	}
-
 	return &internalQueue{
-		flushTimeout:   qFlushTimeout,
-		maxSize:        config.Instance().UInt("queue.max_size", 10),
-		messages:       make([]internalMessage, 0),
-		mutex:          &sync.Mutex{},
-		producer:       producer,
-		rd:             rdClient,
-		rdFlushTimeout: qRedisFlushTimeout,
-		rdKeyName:      config.Instance().UString("queue.redis.key_name", "failed_messages"),
+		messages:    make([]internalMessage, 0),
+		producer:    producer,
+		rd:          rdClient,
+		statsClient: statsClient,
+		redisConfig: globalConfig.Redis,
 	}, nil
 }
 
@@ -103,7 +84,7 @@ func (q *internalQueue) run(wg *sync.WaitGroup, die chan bool) {
 
 			nbMessages = len(q.messages)
 
-			if (nbMessages >= q.maxSize) || (nbMessages > 0 && time.Now().Sub(lastFlush) > q.flushTimeout) {
+			if (nbMessages >= q.redisConfig.PoolSize) || (nbMessages > 0 && time.Now().Sub(lastFlush) > q.redisConfig.FlushTimeout.Duration) {
 				q.handleMessages()
 
 				lastFlush = time.Now()
@@ -124,13 +105,10 @@ func (q *internalQueue) add(msg internalMessage) {
 
 	q.messages = append(q.messages, msg)
 
-	statsd.Instance().Increment("internal-queue.new-messages")
+	operation := stats.MetricOperation{"internal-queue", "new-messages", stats.MetricEmptyPlaceholder}
+	q.statsClient.TrackOperation(statsQueueSection, operation, nil, true)
 
-	logger.Instance().
-		WithFields(log.Fields{
-			"topic": msg.Topic,
-		}).
-		Debug("Added message to internal queue")
+	log.WithField("topic", msg.Topic).Debug("Added message to internal queue")
 }
 
 // Tries to send messages to the kafka
@@ -144,7 +122,7 @@ func (q *internalQueue) handleMessages() {
 		failedMessages []internalMessage = make([]internalMessage, 0)
 	)
 
-	logger.Instance().Debug("Start sending messages to kafka")
+	log.Debug("Start sending messages to kafka")
 
 	for _, msg := range q.messages {
 		err = q.producer.handleMessage(msg)
@@ -155,27 +133,22 @@ func (q *internalQueue) handleMessages() {
 				continue
 			}
 
-			logger.Instance().
-				WithError(err).
-				Warning("Unable to send message to kafka")
+			log.WithError(err).Warning("Unable to send message to kafka")
 		}
 
 		err = q.storeInRedis(msg)
 
 		// If it is not possible to store message even in redis,
 		// we'll put the message into memory and process it later
+		operation := stats.MetricOperation{"redis", "messages", stats.MetricEmptyPlaceholder}
 		if err != nil {
-			statsd.Instance().Increment("redis.failed-messages")
-
 			failedMessages = append(failedMessages, msg)
 
-			logger.Instance().
-				WithError(err).
-				Warning("Unable to store message in Redis")
+			q.statsClient.TrackOperation(statsQueueSection, operation, nil, false)
+			log.WithError(err).Warning("Unable to store message in Redis")
 		} else {
-			statsd.Instance().Increment("redis.new-messages")
-
-			logger.Instance().Debug("Successfully stored message in Redis")
+			q.statsClient.TrackOperation(statsQueueSection, operation, nil, true)
+			log.Debug("Successfully stored message in Redis")
 		}
 	}
 
@@ -189,7 +162,7 @@ func (q *internalQueue) storeInRedis(msg internalMessage) error {
 		return err
 	}
 
-	return q.rd.LPush(q.rdKeyName, string(strMsg)).Err()
+	return q.rd.LPush(q.redisConfig.KeyName, string(strMsg)).Err()
 }
 
 // Periodically move messages from Redis back to the main queue
@@ -202,30 +175,26 @@ func (q *internalQueue) flushRedis() {
 
 	for q.isWorking {
 		for {
-			bytesMsg, err = q.rd.LPop(q.rdKeyName).Bytes()
+			bytesMsg, err = q.rd.LPop(q.redisConfig.KeyName).Bytes()
 			if err != nil || len(bytesMsg) == 0 {
 				break
 			}
 
 			err = json.Unmarshal(bytesMsg, &msg)
 			if err != nil {
-				logger.Instance().
-					WithError(err).
-					Warning("Unable to unmarshal JSON from redis")
+				log.WithError(err).Warning("Unable to unmarshal JSON from redis")
 				continue
 			}
 
 			q.add(msg)
 		}
 
-		time.Sleep(q.rdFlushTimeout)
+		time.Sleep(q.redisConfig.ReadTimeout.Duration)
 	}
 
 	// Close connection to redis
 	err = q.rd.Close()
 	if err != nil {
-		logger.Instance().
-			WithError(err).
-			Warning("An error occurred while closing connection to redis")
+		log.WithError(err).Warning("An error occurred while closing connection to redis")
 	}
 }

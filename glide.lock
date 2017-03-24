@@ -1,10 +1,10 @@
-hash: 7e601287ec17cc30e0da65057cb756a7f29d8852f83634db7157bb6d05f69d16
-updated: 2016-11-03T18:06:41.403098823+01:00
+hash: 687d82a8331d6c04039d615f1383e6ff5fb3b2d44d54c430106a0fc066f2bdde
+updated: 2017-03-24T17:30:11.096272273+01:00
 imports:
 - name: github.com/bshuster-repo/logrus-logstash-hook
   version: c5a17a5eb72da4c560f5e9bfb165180d9e681741
 - name: github.com/davecgh/go-spew
-  version: 6d212800a42e8ab5c146b8ace3490ee17e5225f9
+  version: 346938d642f2ec3594ed81d874461961cd0faa76
   subpackages:
   - spew
 - name: github.com/eapache/go-resiliency
@@ -17,18 +17,30 @@ imports:
   version: 44cc805cf13205b55f69e14bcb69867d1ae92f98
 - name: github.com/golang/snappy
   version: d9eb7a3d35ec988b8585d4a0068e462c27d28380
+- name: github.com/hellofresh/stats-go
+  version: 47f7950a30e6f2c5f5769dd06856647d58ecf9f6
+- name: github.com/kelseyhightower/envconfig
+  version: f611eb38b3875cc3bd991ca91c51d06446afa14c
 - name: github.com/klauspost/crc32
   version: 19b0b332c9e4516a6370a0456e6182c3b5036720
 - name: github.com/olebedev/config
   version: dd1049a3738432dfc49417e2ae5bd97e132ecac6
+- name: github.com/pierrec/lz4
+  version: 90290f74b1b4d9c097f0a3b3c7eba2ef3875c699
+- name: github.com/pierrec/xxHash
+  version: 5a004441f897722c627870a981d02b29924215fa
+  subpackages:
+  - xxHash32
+- name: github.com/rcrowley/go-metrics
+  version: 1f30fe9094a513ce4c700b9a54458bbb0c96996c
 - name: github.com/Sirupsen/logrus
-  version: 4b6ea7319e214d98c938f12692336f7ca9348d6b
+  version: ba1b36c82c5e05c4f912a88eab0dcd91a171688f
   subpackages:
   - hooks/syslog
 - name: github.com/streadway/amqp
   version: 2e25825abdbd7752ff08b270d313b93519a0a232
 - name: github.com/urfave/cli
-  version: a14d7d367bc02b1f57d88de97926727f2d936387
+  version: 0bdeddeeb0f650497d603c4ad7b20cfe685682f6
 - name: golang.org/x/sys
   version: 8f0908ab3b2457e2e15403d3697c9ef5cb4b57a9
   subpackages:
@@ -47,7 +59,7 @@ imports:
   - internal/hashtag
   - internal/pool
 - name: gopkg.in/Shopify/sarama.v1
-  version: bd61cae2be85fa6ff40eb23dcdd24567967ac2ae
+  version: 0fb560e5f7fbcaee2f75e3c34174320709f69944
 - name: gopkg.in/yaml.v2
   version: 31c299268d302dd0aa9a0dcf765a3d58971ac83f
 testImports: []

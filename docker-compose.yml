@@ -1,0 +1,53 @@
+# DO NOT USE IN PRODUCTION. THIS FILE IS ONLY FOR TESTING PURPOSES.
+version: "2"
+services:
+    kandalf_0:
+        build: .
+        volumes:
+            - "./_build/out/linux:/app"
+            - "./_build/resources:/config"
+        links:
+            - kafka
+            - redis
+            - rmq
+
+    kandalf_1:
+        build: .
+        volumes:
+            - "./_build/out/linux:/app"
+            - "./_build/resources:/config"
+        links:
+            - kafka
+            - redis
+            - rmq
+
+    kandalf_2:
+        build: .
+        volumes:
+            - "./_build/out/linux:/app"
+            - "./_build/resources:/config"
+        links:
+            - kafka
+            - redis
+            - rmq
+
+    kafka:
+        image: spotify/kafka
+        ports:
+           - 9092
+        environment:
+           TOPICS: "new-orders,loyalty"
+
+    redis:
+        image: redis:3.2-alpine
+        ports:
+            - 6379
+
+    rmq:
+        image: rabbitmq:3.6-management-alpine
+        ports:
+            - 5672
+            - 15672
+        environment:
+            RABBITMQ_DEFAULT_USER: user
+            RABBITMQ_DEFAULT_PASS: password

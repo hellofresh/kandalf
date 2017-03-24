@@ -1,67 +1,44 @@
 package main
 
 import (
-	"fmt"
 	"os"
 	"os/signal"
+	"strings"
 	"sync"
 	"syscall"
 
-	"github.com/urfave/cli"
-
-	"github.com/hellofresh/kandalf/config"
-	"github.com/hellofresh/kandalf/logger"
-	"github.com/hellofresh/kandalf/pipes"
-	"github.com/hellofresh/kandalf/statsd"
+	log "github.com/Sirupsen/logrus"
+	"github.com/hellofresh/kandalf/pkg/config"
+	"github.com/hellofresh/kandalf/pkg/pipes"
 	"github.com/hellofresh/kandalf/workers"
+	"github.com/hellofresh/stats-go"
 )
 
-// Instantiates new application and launches it
-func main() {
-	app := cli.NewApp()
-
-	app.Name = "kandalf"
-	app.Usage = "Daemon that reads all messages from RabbitMQ and puts them to kafka"
-	// This will be replaced by `_build/codeship/publish-release.sh`
-	app.Version = "%app.version%"
-	app.Authors = []cli.Author{
-		{
-			Name:  "Nikita Vershinin",
-			Email: "endeveit@gmail.com",
-		},
-	}
-	app.Flags = []cli.Flag{
-		cli.StringFlag{
-			Name:  "config, c",
-			Value: "/etc/kandalf/config.yml",
-			Usage: "Path to the configuration file",
-		},
-		cli.StringFlag{
-			Name:  "pipes, p",
-			Value: "/etc/kandalf/pipes.yml",
-			Usage: "Path to file with pipes rules",
-		},
-	}
-	app.Action = actionRun
-
-	err := app.Run(os.Args)
+func failOnError(err error, msg string) {
 	if err != nil {
-		fmt.Fprintf(os.Stderr, "Unhandled error occurred while running application: %v\n", err)
+		log.WithError(err).Panic(msg)
 	}
 }
 
-// Runs the application
-func actionRun(ctx *cli.Context) error {
+func main() {
+	globalConfig := config.LoadEnv()
+
+	level, err := log.ParseLevel(strings.ToLower(globalConfig.LogLevel))
+	failOnError(err, "Failed to get log level")
+	log.SetLevel(level)
+
+	pipesList, err := pipes.LoadPipes(globalConfig.Kafka.PipesConfig)
+	failOnError(err, "Failed to get log level")
+
+	statsClient := stats.NewStatsdStatsClient(globalConfig.Stats.DSN, globalConfig.Stats.Prefix)
+	defer statsClient.Close()
+
 	var (
-		wg      *sync.WaitGroup = &sync.WaitGroup{}
-		die     chan bool       = make(chan bool, 1)
-		pConfig string          = ctx.String("config")
-		pPipes  string          = ctx.String("pipes")
+		wg  *sync.WaitGroup = &sync.WaitGroup{}
+		die chan bool       = make(chan bool, 1)
 	)
 
-	doReload(pConfig, pPipes)
-
-	worker := workers.NewWorker()
+	worker := workers.NewWorker(globalConfig, pipesList, statsClient)
 	ch := make(chan os.Signal, 1)
 	signal.Notify(ch, os.Interrupt, syscall.SIGHUP)
 
@@ -70,13 +47,8 @@ func actionRun(ctx *cli.Context) error {
 			sig := <-ch
 			switch sig {
 			case os.Interrupt:
-				logger.Instance().Info("Got interrupt signal. Will stop the work")
+				log.Info("Got interrupt signal. Will stop the work")
 				close(die)
-			case syscall.SIGHUP:
-				logger.Instance().Info("Got SIGHUP. Will reload config and pipes")
-				doReload(pConfig, pPipes)
-
-				worker.Reload()
 			}
 		}
 	}()
@@ -85,13 +57,4 @@ func actionRun(ctx *cli.Context) error {
 	wg.Add(1)
 	go worker.Run(wg, die)
 	wg.Wait()
-
-	return nil
-}
-
-// Reloads configuration and lists of available pipes
-func doReload(pConfig, pPipes string) {
-	cnf := config.Instance(pConfig)
-	_ = pipes.All(pPipes)
-	_ = statsd.Instance(cnf)
 }

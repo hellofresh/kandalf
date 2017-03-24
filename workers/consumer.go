@@ -5,29 +5,29 @@ import (
 	"time"
 
 	log "github.com/Sirupsen/logrus"
-	"github.com/hellofresh/kandalf/config"
-	"github.com/hellofresh/kandalf/logger"
-	"github.com/hellofresh/kandalf/pipes"
+	"github.com/hellofresh/kandalf/pkg/pipes"
 	"github.com/streadway/amqp"
 )
 
 type internalConsumer struct {
-	con   *amqp.Connection
-	queue *internalQueue
-	pipe  pipes.Pipe
+	con                  *amqp.Connection
+	queue                *internalQueue
+	pipe                 pipes.Pipe
+	infiniteCycleTimeout time.Duration
 }
 
 // Returns new instance of RabbitMQ consumer
-func newInternalConsumer(url string, queue *internalQueue, p pipes.Pipe) (*internalConsumer, error) {
+func newInternalConsumer(url string, queue *internalQueue, p pipes.Pipe, infiniteCycleTimeout time.Duration) (*internalConsumer, error) {
 	con, err := amqp.Dial(url)
 	if err != nil {
 		return nil, err
 	}
 
 	return &internalConsumer{
-		con:   con,
-		queue: queue,
-		pipe:  p,
+		con:                  con,
+		queue:                queue,
+		pipe:                 p,
+		infiniteCycleTimeout: infiniteCycleTimeout,
 	}, nil
 }
 
@@ -37,55 +37,45 @@ func (c *internalConsumer) run(wg *sync.WaitGroup, die chan bool) {
 
 	ch, err := c.con.Channel()
 	if err != nil {
-		logger.Instance().
-			WithError(err).
-			Warning("Unable to open channel")
+		log.WithError(err).Error("Unable to open channel")
 
 		return
 	}
 
-	err = ch.ExchangeDeclare(c.pipe.RabbitmqExchangeName, "topic", true, false, false, false, nil)
+	err = ch.ExchangeDeclare(c.pipe.RabbitExchangeName, "topic", true, false, false, false, nil)
 	if err != nil {
-		logger.Instance().
-			WithError(err).
-			Warning("Unable to declare exchange")
+		log.WithError(err).Error("Unable to declare exchange")
 
 		return
 	}
 
-	q, err := ch.QueueDeclare(c.pipe.RabbitmqQueueName, false, true, false, true, nil)
+	q, err := ch.QueueDeclare(c.pipe.RabbitQueueName, false, true, false, true, nil)
 	if err != nil {
-		logger.Instance().
-			WithError(err).
-			Warning("Unable to declare queue")
+		log.WithError(err).Error("Unable to declare queue")
 
 		return
 	}
 
-	err = ch.QueueBind(q.Name, c.pipe.RabbitmqRoutingKey, c.pipe.RabbitmqExchangeName, true, nil)
+	err = ch.QueueBind(q.Name, c.pipe.RabbitRoutingKey, c.pipe.RabbitExchangeName, true, nil)
 	if err != nil {
-		logger.Instance().
-			WithError(err).
-			Warning("Unable to bind the queue")
+		log.WithError(err).Error("Unable to bind the queue")
 
 		return
 	}
 
 	msgs, err := ch.Consume(q.Name, "", true, false, false, false, nil)
 	if err != nil {
-		logger.Instance().
-			WithError(err).
-			Warning("Unable to start consume from the queue")
+		log.WithError(err).Error("Unable to start consume from the queue")
 
 		return
 	} else {
-		logger.Instance().
+		log.
 			WithFields(log.Fields{
-				"exchange_name": c.pipe.RabbitmqExchangeName,
-				"queue_name":    c.pipe.RabbitmqQueueName,
-				"routing_key":   c.pipe.RabbitmqRoutingKey,
+				"exchange_name": c.pipe.RabbitExchangeName,
+				"queue_name":    c.pipe.RabbitQueueName,
+				"routing_key":   c.pipe.RabbitRoutingKey,
 			}).
-			Debug("Start consuming messages")
+			Error("Start consuming messages")
 	}
 
 	stopConsumer := make(chan bool)
@@ -104,9 +94,7 @@ func (c *internalConsumer) run(wg *sync.WaitGroup, die chan bool) {
 		// Don't forget to close connection to RabbitMQ
 		err = c.con.Close()
 		if err != nil {
-			logger.Instance().
-				WithError(err).
-				Warning("An error occurred while closing connection to RabbitMQ")
+			log.WithError(err).Error("An error occurred while closing connection to RabbitMQ")
 		}
 	}()
 
@@ -121,12 +109,11 @@ func (c *internalConsumer) run(wg *sync.WaitGroup, die chan bool) {
 			}
 
 			// Prevent CPU overload
-			time.Sleep(config.InfiniteCycleTimeout)
+			time.Sleep(c.infiniteCycleTimeout)
 		}
 	}()
 
 	<-stopConsumer
 
-	logger.Instance().
-		Debug("Will stop consuming according to the signal came from Worker")
+	log.Info("Will stop consuming according to the signal came from Worker")
 }

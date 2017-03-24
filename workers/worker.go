@@ -8,7 +8,6 @@ import (
 
 	log "github.com/Sirupsen/logrus"
 	"github.com/hellofresh/kandalf/pkg/config"
-	"github.com/hellofresh/kandalf/pkg/pipes"
 	"github.com/hellofresh/stats-go"
 )
 
@@ -17,7 +16,7 @@ type Worker struct {
 	wg           *sync.WaitGroup
 	statsClient  stats.StatsClient
 	isWorking    bool
-	pipes        []pipes.Pipe
+	pipes        []config.Pipe
 	globalConfig config.GlobalConfig
 }
 
@@ -26,7 +25,7 @@ type internalWorker interface {
 }
 
 // Returns new instance of worker
-func NewWorker(globalConfig config.GlobalConfig, pipes []pipes.Pipe, statsClient stats.StatsClient) *Worker {
+func NewWorker(globalConfig config.GlobalConfig, pipes []config.Pipe, statsClient stats.StatsClient) *Worker {
 	return &Worker{
 		die:          make(chan bool, 1),
 		wg:           &sync.WaitGroup{},

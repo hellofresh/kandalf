@@ -27,7 +27,7 @@ func main() {
 	failOnError(err, "Failed to get log level")
 	log.SetLevel(level)
 
-	pipesList, err := pipes.LoadPipes(globalConfig.Kafka.PipesConfig)
+	pipesList, err := config.LoadPipes(globalConfig.Kafka.PipesConfig)
 	failOnError(err, "Failed to get log level")
 
 	statsClient := stats.NewStatsdStatsClient(globalConfig.Stats.DSN, globalConfig.Stats.Prefix)

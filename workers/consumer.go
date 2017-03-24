@@ -5,19 +5,19 @@ import (
 	"time"
 
 	log "github.com/Sirupsen/logrus"
-	"github.com/hellofresh/kandalf/pkg/pipes"
+	"github.com/hellofresh/kandalf/pkg/config"
 	"github.com/streadway/amqp"
 )
 
 type internalConsumer struct {
 	con                  *amqp.Connection
 	queue                *internalQueue
-	pipe                 pipes.Pipe
+	pipe                 config.Pipe
 	infiniteCycleTimeout time.Duration
 }
 
 // Returns new instance of RabbitMQ consumer
-func newInternalConsumer(url string, queue *internalQueue, p pipes.Pipe, infiniteCycleTimeout time.Duration) (*internalConsumer, error) {
+func newInternalConsumer(url string, queue *internalQueue, p config.Pipe, infiniteCycleTimeout time.Duration) (*internalConsumer, error) {
 	con, err := amqp.Dial(url)
 	if err != nil {
 		return nil, err

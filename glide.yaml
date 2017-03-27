@@ -24,3 +24,5 @@ import:
   version: ^1.1.0
   subpackages:
   - spew
+- package: github.com/satori/go.uuid
+  version: ^1.1.0

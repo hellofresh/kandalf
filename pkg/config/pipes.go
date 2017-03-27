@@ -1,16 +1,22 @@
 package config
 
 import (
+	"encoding/json"
 	"io/ioutil"
 
 	"gopkg.in/yaml.v2"
 )
 
 type Pipe struct {
-	KafkaTopic         string `yaml:"kafka_topic"`
-	RabbitExchangeName string `yaml:"rabbitmq_exchange_name"`
-	RabbitRoutingKey   string `yaml:"rabbitmq_routing_key"`
-	RabbitQueueName    string `yaml:"rabbitmq_queue_name"`
+	KafkaTopic         string `yaml:"kafka_topic" json:"kafka_topic"`
+	RabbitExchangeName string `yaml:"rabbitmq_exchange_name" json:"rabbitmq_exchange_name"`
+	RabbitRoutingKey   string `yaml:"rabbitmq_routing_key" json:"rabbitmq_routing_key"`
+	RabbitQueueName    string `yaml:"rabbitmq_queue_name" json:"rabbitmq_queue_name"`
+}
+
+func (p Pipe) String() string {
+	b, _ := json.Marshal(p)
+	return string(b)
 }
 
 func LoadPipes(pipesConfigPath string) ([]Pipe, error) {

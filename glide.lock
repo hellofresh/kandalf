@@ -1,5 +1,5 @@
-hash: 687d82a8331d6c04039d615f1383e6ff5fb3b2d44d54c430106a0fc066f2bdde
-updated: 2017-03-24T17:30:11.096272273+01:00
+hash: 56a8a0e48f9aa4a0dd7c05eb7e58372b220c1ca10174505e20736f0e38b4d6fe
+updated: 2017-03-27T13:39:25.9015175+02:00
 imports:
 - name: github.com/bshuster-repo/logrus-logstash-hook
   version: c5a17a5eb72da4c560f5e9bfb165180d9e681741
@@ -23,6 +23,10 @@ imports:
   version: f611eb38b3875cc3bd991ca91c51d06446afa14c
 - name: github.com/klauspost/crc32
   version: 19b0b332c9e4516a6370a0456e6182c3b5036720
+- name: github.com/mattes/migrate
+  version: ce1b59bb819416ca67422929b1cb48bb342720b6
+  subpackages:
+  - pipe
 - name: github.com/olebedev/config
   version: dd1049a3738432dfc49417e2ae5bd97e132ecac6
 - name: github.com/pierrec/lz4
@@ -33,6 +37,8 @@ imports:
   - xxHash32
 - name: github.com/rcrowley/go-metrics
   version: 1f30fe9094a513ce4c700b9a54458bbb0c96996c
+- name: github.com/satori/go.uuid
+  version: 879c5887cd475cd7864858769793b2ceb0d44feb
 - name: github.com/Sirupsen/logrus
   version: ba1b36c82c5e05c4f912a88eab0dcd91a171688f
   subpackages:

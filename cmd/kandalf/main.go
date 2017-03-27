@@ -1,16 +1,15 @@
 package main
 
 import (
-	"os"
-	"os/signal"
+	"net/url"
 	"strings"
-	"sync"
-	"syscall"
 
 	log "github.com/Sirupsen/logrus"
+	"github.com/hellofresh/kandalf/pkg/amqp"
 	"github.com/hellofresh/kandalf/pkg/config"
-	"github.com/hellofresh/kandalf/pkg/pipes"
-	"github.com/hellofresh/kandalf/workers"
+	"github.com/hellofresh/kandalf/pkg/kafka"
+	"github.com/hellofresh/kandalf/pkg/storage"
+	"github.com/hellofresh/kandalf/pkg/workers"
 	"github.com/hellofresh/stats-go"
 )
 
@@ -31,30 +30,46 @@ func main() {
 	failOnError(err, "Failed to get log level")
 
 	statsClient := stats.NewStatsdStatsClient(globalConfig.Stats.DSN, globalConfig.Stats.Prefix)
-	defer statsClient.Close()
-
-	var (
-		wg  *sync.WaitGroup = &sync.WaitGroup{}
-		die chan bool       = make(chan bool, 1)
-	)
-
-	worker := workers.NewWorker(globalConfig, pipesList, statsClient)
-	ch := make(chan os.Signal, 1)
-	signal.Notify(ch, os.Interrupt, syscall.SIGHUP)
-
-	go func() {
-		for {
-			sig := <-ch
-			switch sig {
-			case os.Interrupt:
-				log.Info("Got interrupt signal. Will stop the work")
-				close(die)
-			}
+	defer func() {
+		if err := statsClient.Close(); err != nil {
+			log.WithError(err).Error("Got error on closing stats client")
 		}
 	}()
 
-	// Here be dragons
-	wg.Add(1)
-	go worker.Run(wg, die)
-	wg.Wait()
+	storageUrl, err := url.Parse(globalConfig.StorageDSN)
+	failOnError(err, "Failed to parse Storage DSN")
+
+	persistentStorage, err := storage.NewPersistentStorage(storageUrl)
+	failOnError(err, "Failed to establish Redis connection")
+	defer func() {
+		if err := persistentStorage.Close(); err != nil {
+			log.WithError(err).Error("Got error on closing persistent storage")
+		}
+	}()
+
+	producer, err := kafka.NewProducer(globalConfig.Kafka, statsClient)
+	failOnError(err, "Failed to establish Kafka connection")
+	defer func() {
+		if err := producer.Close(); err != nil {
+			log.WithError(err).Error("Got error on closing kafka producer")
+		}
+	}()
+
+	worker, err := workers.NewBridgeWorker(globalConfig.Worker, persistentStorage, producer, statsClient)
+
+	queuesHandler := amqp.NewQueuesHandler(pipesList, worker.MessageHandler, statsClient)
+	amqpConnection, err := amqp.NewConnection(globalConfig.RabbitDSN, queuesHandler)
+	failOnError(err, "Failed to establish initial connection to AMQP")
+	defer func() {
+		if err := amqpConnection.Close(); err != nil {
+			log.WithError(err).Error("Got error on closing AMQP connection")
+		}
+	}()
+
+	forever := make(chan bool)
+
+	worker.Go(forever)
+
+	log.Infof("[*] Waiting for users. To exit press CTRL+C")
+	<-forever
 }

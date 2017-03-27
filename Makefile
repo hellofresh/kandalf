@@ -1,4 +1,5 @@
 GO_LINKER_FLAGS=-ldflags="-s -w"
+CGO_ENABLED=0
 
 APP_NAME=kandalf
 APP_SRC=$(CURDIR)/cmd/kandalf/main.go

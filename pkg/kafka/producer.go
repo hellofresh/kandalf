@@ -1,21 +1,23 @@
 package kafka
 
 import (
+	"github.com/Shopify/sarama"
 	log "github.com/Sirupsen/logrus"
 	"github.com/hellofresh/kandalf/pkg/config"
 	"github.com/hellofresh/stats-go"
-	"gopkg.in/Shopify/sarama.v1"
 )
 
 const (
 	statsKafkaSection = "kafka"
 )
 
+// Producer contains connection data for Kafka
 type Producer struct {
 	kafkaClient sarama.SyncProducer
 	statsClient stats.StatsClient
 }
 
+// NewProducer instantiates and establishes new Kafka connection
 func NewProducer(kafkaConfig config.KafkaConfig, statsClient stats.StatsClient) (*Producer, error) {
 	cnf := sarama.NewConfig()
 	cnf.Producer.RequiredAcks = sarama.WaitForAll
@@ -29,10 +31,12 @@ func NewProducer(kafkaConfig config.KafkaConfig, statsClient stats.StatsClient) 
 	return &Producer{kafkaClient: client, statsClient: statsClient}, nil
 }
 
+// Close closes Kafka connection
 func (p *Producer) Close() error {
 	return p.kafkaClient.Close()
 }
 
+// Publish publishes message to Kafka
 func (p *Producer) Publish(msg Message) error {
 	_, _, err := p.kafkaClient.SendMessage(&sarama.ProducerMessage{
 		Topic: msg.Topic,

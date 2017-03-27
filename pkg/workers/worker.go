@@ -6,4 +6,6 @@ type Worker interface {
 	Execute()
 	// Go runs the service forever in async way in go-routine
 	Go(interrupt chan bool)
+	// Close closes worker resources
+	Close() error
 }

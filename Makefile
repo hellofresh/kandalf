@@ -1,93 +1,47 @@
-GO_LINKER_FLAGS=-ldflags="-s -w"
-CGO_ENABLED=0
+NO_COLOR=\033[0m
+OK_COLOR=\033[32;01m
+ERROR_COLOR=\033[31;01m
+WARN_COLOR=\033[33;01m
 
-APP_NAME=kandalf
-APP_SRC=$(CURDIR)/cmd/kandalf/main.go
+# The import path is the unique absolute name of your repository.
+# All subpackages should always be imported as relative to it.
+# If you change this, run `make clean`.
+IMPORT_PATH := github.com/hellofresh/kandalf
+PKG_SRC := $(IMPORT_PATH)/cmd/kandalf
 
-GO_PROJECT_FILES=`go list -f '{{.Dir}}' ./... | grep -v /vendor/`
-GO_PROJECT_PACKAGES=`go list ./... | grep -v /vendor/`
+# Space separated patterns of packages to skip in list, test, format.
+IGNORED_PACKAGES := /vendor/
 
-# Useful directories
-DIR_OUT=$(CURDIR)/out
-DIR_OUT_LINUX=$(DIR_OUT)/linux
-DIR_RESOURCES=$(CURDIR)/ci/resources
-DOCKER_COMPOSE_FILE=$(CURDIR)/docker-compose.test.yml
+.PHONY: all clean deps build
 
-EXTERNAL_TOOLS=\
-	github.com/kisielk/errcheck \
-	github.com/Masterminds/glide
+all: clean deps build
 
-.vet:
-	@echo "Checking for suspicious constructs"
-	@for project_file in $(GO_PROJECT_FILES); do \
-		go tool vet $$project_file; \
-		if [ $$? -ne 0 ]; then \
-			echo ""; \
-			echo "Vet found suspicious constructs. Please check the reported constructs"; \
-			echo "and fix them if necessary."; \
-			exit 1;\
-		fi \
-	done
+deps:
+	@echo "$(OK_COLOR)==> Installing glide dependencies$(NO_COLOR)"
+	go get -u github.com/Masterminds/glide
+	go get -u github.com/golang/lint/golint
+	glide install
 
-.errcheck:
-	@echo "Checking the go files for unchecked errors"
-	@for project_file in $(GO_PROJECT_FILES); do \
-		if [ -f $$project_file ]; then \
-			errcheck $$project_file; \
-		else \
-			errcheck $$(find $$project_file -type f); \
-		fi; \
-		if [ $$? -ne 0 ]; then \
-			echo ""; \
-			echo "Found not handled returning errors. Please check them and fix if necessary."; \
-			exit 1;\
-		fi \
-	done
+build:
+	@echo "$(OK_COLOR)==> Building... $(NO_COLOR)"
+	/bin/sh -c "ARCH=$(ARCH) PKG_SRC=$(PKG_SRC) ./build/build.sh"
 
-# Default make target
-build: build-linux build-osx
-
-build-linux:
-	@echo Build Linux amd64
-	@env GOOS=linux GOARCH=amd64 go build -o $(DIR_OUT_LINUX)/$(APP_NAME) $(GO_LINKER_FLAGS) $(APP_SRC)
-
-build-osx:
-	@echo Build OSX amd64
-	@env GOOS=darwin GOARCH=amd64 go build -o $(DIR_OUT)/darwin/$(APP_NAME) $(GO_LINKER_FLAGS) $(APP_SRC)
-
-# Launch all checks
-check: .vet .errcheck
-
-# Run the application in docker (only for testing purposes)
-docker-run:
-	docker-compose -f $(DOCKER_COMPOSE_FILE) up bridge
-
-# Bootstrap and up docker environment (only for testing purposes)
-docker-up-env:
-	docker-compose -f $(DOCKER_COMPOSE_FILE) stop
-	docker-compose -f $(DOCKER_COMPOSE_FILE) rm --force
-	docker-compose -f $(DOCKER_COMPOSE_FILE) up -d kafka
-	docker-compose -f $(DOCKER_COMPOSE_FILE) up -d redis
-	docker-compose -f $(DOCKER_COMPOSE_FILE) up -d rmq
-	sleep 4
-	docker-compose -f $(DOCKER_COMPOSE_FILE) exec rmq rabbitmqctl trace_on
-
-# Format the source code
-fmt:
-	@gofmt -s=true -w $(GO_PROJECT_FILES)
-
-# Run the program from CLI without compilation for testing purposes
-run:
-	go run $(APP_SRC) -c=$(DIR_RESOURCES)/config.yml -p=$(DIR_RESOURCES)/pipes.yml
-
-# Bootstrap vendoring tool and dependencies
-bootstrap:
-	@for tool in  $(EXTERNAL_TOOLS) ; do \
-		echo "Installing $$tool" ; \
-		go get -u $$tool; \
-	done
-	@echo "Installing dependencies"; glide install
-
-# Launch tests
 test:
-	@go test $(GO_PROJECT_PACKAGES)
+	@/bin/sh -c "./build/test.sh $(allpackages)"
+
+lint:
+	@echo "$(OK_COLOR)==> Linting... $(NO_COLOR)"
+	golint $(allpackages)
+
+clean:
+	@echo "$(OK_COLOR)==> Cleaning project$(NO_COLOR)"
+	go clean
+	rm -rf bin $GOPATH/bin
+
+# cd into the GOPATH to workaround ./... not following symlinks
+_allpackages = $(shell ( go list ./... 2>&1 1>&3 | \
+    grep -v -e "^$$" $(addprefix -e ,$(IGNORED_PACKAGES)) 1>&2 ) 3>&1 | \
+    grep -v -e "^$$" $(addprefix -e ,$(IGNORED_PACKAGES)))
+
+# memoize allpackages, so that it's executed only once and only if used
+allpackages = $(if $(__allpackages),,$(eval __allpackages := $$(_allpackages)))$(__allpackages)

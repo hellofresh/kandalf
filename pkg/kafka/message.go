@@ -6,12 +6,14 @@ import (
 	"github.com/satori/go.uuid"
 )
 
+// Message struct contains data for message read from RabbitMQ and ready for sending to Kafka
 type Message struct {
 	ID    uuid.UUID `json:"id"`
 	Body  []byte    `json:"body"`
 	Topic string    `json:"topic"`
 }
 
+// NewMessage initializes and instantiates new Message
 func NewMessage(body []byte, topic string) *Message {
 	return &Message{uuid.NewV4(), body, topic}
 }

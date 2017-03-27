@@ -1,8 +1,6 @@
-hash: 56a8a0e48f9aa4a0dd7c05eb7e58372b220c1ca10174505e20736f0e38b4d6fe
-updated: 2017-03-27T13:39:25.9015175+02:00
+hash: 482e4f5e0b114dd06c4ad95d3650eac76d4e06751d795fc1028704c047220e0f
+updated: 2017-03-27T15:36:32.146630731+02:00
 imports:
-- name: github.com/bshuster-repo/logrus-logstash-hook
-  version: c5a17a5eb72da4c560f5e9bfb165180d9e681741
 - name: github.com/davecgh/go-spew
   version: 346938d642f2ec3594ed81d874461961cd0faa76
   subpackages:
@@ -15,6 +13,14 @@ imports:
   version: bb955e01b9346ac19dc29eb16586c90ded99a98c
 - name: github.com/eapache/queue
   version: 44cc805cf13205b55f69e14bcb69867d1ae92f98
+- name: github.com/go-redis/redis
+  version: 2cf5af9928978bbef8d1076607022403439e177c
+  subpackages:
+  - internal
+  - internal/consistenthash
+  - internal/hashtag
+  - internal/pool
+  - internal/proto
 - name: github.com/golang/snappy
   version: d9eb7a3d35ec988b8585d4a0068e462c27d28380
 - name: github.com/hellofresh/stats-go
@@ -23,12 +29,6 @@ imports:
   version: f611eb38b3875cc3bd991ca91c51d06446afa14c
 - name: github.com/klauspost/crc32
   version: 19b0b332c9e4516a6370a0456e6182c3b5036720
-- name: github.com/mattes/migrate
-  version: ce1b59bb819416ca67422929b1cb48bb342720b6
-  subpackages:
-  - pipe
-- name: github.com/olebedev/config
-  version: dd1049a3738432dfc49417e2ae5bd97e132ecac6
 - name: github.com/pierrec/lz4
   version: 90290f74b1b4d9c097f0a3b3c7eba2ef3875c699
 - name: github.com/pierrec/xxHash
@@ -39,33 +39,18 @@ imports:
   version: 1f30fe9094a513ce4c700b9a54458bbb0c96996c
 - name: github.com/satori/go.uuid
   version: 879c5887cd475cd7864858769793b2ceb0d44feb
+- name: github.com/Shopify/sarama
+  version: 0fb560e5f7fbcaee2f75e3c34174320709f69944
 - name: github.com/Sirupsen/logrus
   version: ba1b36c82c5e05c4f912a88eab0dcd91a171688f
-  subpackages:
-  - hooks/syslog
 - name: github.com/streadway/amqp
   version: 2e25825abdbd7752ff08b270d313b93519a0a232
-- name: github.com/urfave/cli
-  version: 0bdeddeeb0f650497d603c4ad7b20cfe685682f6
 - name: golang.org/x/sys
   version: 8f0908ab3b2457e2e15403d3697c9ef5cb4b57a9
   subpackages:
   - unix
 - name: gopkg.in/alexcesaro/statsd.v2
   version: 7fea3f0d2fab1ad973e641e51dba45443a311a90
-- name: gopkg.in/bsm/ratelimit.v1
-  version: db14e161995a5177acef654cb0dd785e8ee8bc22
-- name: gopkg.in/natefinch/lumberjack.v2
-  version: 514cbda263a734ae8caac038dadf05f8f3f9f738
-- name: gopkg.in/redis.v3
-  version: b5e368500d0a508ef8f16e9c2d4025a8a46bcc29
-  subpackages:
-  - internal
-  - internal/consistenthash
-  - internal/hashtag
-  - internal/pool
-- name: gopkg.in/Shopify/sarama.v1
-  version: 0fb560e5f7fbcaee2f75e3c34174320709f69944
 - name: gopkg.in/yaml.v2
   version: 31c299268d302dd0aa9a0dcf765a3d58971ac83f
 testImports: []

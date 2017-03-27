@@ -36,16 +36,12 @@ func main() {
 		}
 	}()
 
-	storageUrl, err := url.Parse(globalConfig.StorageDSN)
+	storageURL, err := url.Parse(globalConfig.StorageDSN)
 	failOnError(err, "Failed to parse Storage DSN")
 
-	persistentStorage, err := storage.NewPersistentStorage(storageUrl)
+	persistentStorage, err := storage.NewPersistentStorage(storageURL)
 	failOnError(err, "Failed to establish Redis connection")
-	defer func() {
-		if err := persistentStorage.Close(); err != nil {
-			log.WithError(err).Error("Got error on closing persistent storage")
-		}
-	}()
+	// Do not close storage here as it is required in Worker close to store unhandled messages
 
 	producer, err := kafka.NewProducer(globalConfig.Kafka, statsClient)
 	failOnError(err, "Failed to establish Kafka connection")
@@ -56,6 +52,11 @@ func main() {
 	}()
 
 	worker, err := workers.NewBridgeWorker(globalConfig.Worker, persistentStorage, producer, statsClient)
+	defer func() {
+		if err := worker.Close(); err != nil {
+			log.WithError(err).Error("Got error on closing persistent storage")
+		}
+	}()
 
 	queuesHandler := amqp.NewQueuesHandler(pipesList, worker.MessageHandler, statsClient)
 	amqpConnection, err := amqp.NewConnection(globalConfig.RabbitDSN, queuesHandler)

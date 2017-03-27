@@ -7,14 +7,17 @@ import (
 	"github.com/streadway/amqp"
 )
 
+// InitQueuesHandler is a handler function type for AMQP connection
 type InitQueuesHandler func(conn *amqp.Connection) error
 
+// Connection struct holds data for AMQP connection
 type Connection struct {
 	dsn        string
 	initQueues InitQueuesHandler
 	conn       *amqp.Connection
 }
 
+// NewConnection instantiates and establishes new AMQP connection
 func NewConnection(dsn string, initQueues InitQueuesHandler) (*Connection, error) {
 	c := &Connection{dsn, initQueues, nil}
 
@@ -29,6 +32,7 @@ func NewConnection(dsn string, initQueues InitQueuesHandler) (*Connection, error
 	return c, nil
 }
 
+// Close closes AMQP connection
 func (c *Connection) Close() error {
 	return c.conn.Close()
 }

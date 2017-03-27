@@ -7,6 +7,7 @@ import (
 	"gopkg.in/yaml.v2"
 )
 
+// Pipe contains settings for single bridge pipe between Kafka and RabbitMQ
 type Pipe struct {
 	KafkaTopic         string `yaml:"kafka_topic" json:"kafka_topic"`
 	RabbitExchangeName string `yaml:"rabbitmq_exchange_name" json:"rabbitmq_exchange_name"`
@@ -19,6 +20,7 @@ func (p Pipe) String() string {
 	return string(b)
 }
 
+// LoadPipes loads pipes config from file
 func LoadPipes(pipesConfigPath string) ([]Pipe, error) {
 	var pipes []Pipe
 

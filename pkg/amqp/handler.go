@@ -15,8 +15,10 @@ const (
 	statsOpConsume   = "consume"
 )
 
+// MessageHandler is a handler function type for consumed messages
 type MessageHandler func(body []byte, pipe config.Pipe) error
 
+// NewQueuesHandler instantiates queues initialisation handler
 func NewQueuesHandler(pipes []config.Pipe, handler MessageHandler, statsClient stats.StatsClient) InitQueuesHandler {
 	return func(conn *amqp.Connection) error {
 		operation := stats.MetricOperation{statsOpConnect, "channel", stats.MetricEmptyPlaceholder}

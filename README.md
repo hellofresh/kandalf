@@ -18,7 +18,9 @@ Service is written in Go language and can be build with go compiler of version 1
 
 ### Application configuration
 
-Application is configured with environment variables. The following settings are available:
+Application is configured with environment variables or YAML config file.
+
+#### Environment variables
 
 * `LOG_LEVEL` - Logging verbosity level, see [logrus](https://github.com/Sirupsen/logrus#level-logging) for details (_default_: `info`)
 * `RABBIT_DSN` - RabbiMQ server DSN
@@ -33,6 +35,30 @@ Application is configured with environment variables. The following settings are
 * `WORKER_CACHE_SIZE` - Max messages number that we store in memory before trying to publish to Kafka (_default_: `10`)
 * `WORKER_CACHE_FLUSH_TIMEOUT` - Max amount of time we store messages in memory before trying to publish to Kafka, must be valid [duration string](https://golang.org/pkg/time/#ParseDuration) (_default_: `5s`)
 * `WORKER_STORAGE_READ_TIMEOUT` - Timeout between attempts of reading persisted messages from storage, to publish them to Kafka, must be at least 2x greater than `WORKER_CYCLE_TIMEOUT`, must be valid [duration string](https://golang.org/pkg/time/#ParseDuration) (_default_: `10s`)
+
+#### Config file
+
+You can use `-c <file_path>` parameter to load application settings from YAML file. Config should have the following structure:
+
+```yaml
+log_level: "info" # same as env LOG_LEVEL
+rabbit_dsn: "amqp://user:password@rmq" # same as env RABBIT_DSN
+storage_dsn: "redis://redis.local/?key=storage:key" # same as env STORAGE_DSN
+kafka:
+  brokers: # same as env KAFKA_BROKERS
+    - "192.0.0.1:9092"
+    - "192.0.0.2:9092"
+  max_retry: 5 # same as env KAFKA_MAX_RETRY
+  pipes_config: "/etc/kandalf/conf/pipes.yml" # same as env KAFKA_PIPES_CONFIG
+stats:
+  dsn: "statsd.local:8125" # same as env STATS_DSN
+  prefix: "kandalf" # same as env STATS_PREFIX
+worker:
+  cycle_timeout: "2s" # same as env WORKER_CYCLE_TIMEOUT
+  cache_size: 10 # same as env WORKER_CACHE_SIZE
+  cache_flush_timeout: "5s" # same as env WORKER_CACHE_FLUSH_TIMEOUT
+  storage_read_timeout: "10s" # same as env WORKER_STORAGE_READ_TIMEOUT
+```
 
 ### Pipes configuration
 

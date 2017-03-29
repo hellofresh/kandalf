@@ -1,4 +1,3 @@
----
 # Available options are: "debug", "info", "warning", "error", "fatal" and "panic"
 log_level: "info"
 rabbit_dsn: "amqp://user:password@rmq"

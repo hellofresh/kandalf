@@ -1,6 +1,7 @@
 package main
 
 import (
+	"flag"
 	"net/url"
 	"strings"
 
@@ -20,14 +21,28 @@ func failOnError(err error, msg string) {
 }
 
 func main() {
-	globalConfig := config.LoadEnv()
+	var (
+		globalConfig config.GlobalConfig
+		err          error
+	)
+
+	configPath := flag.String("c", "", "Path to config file, set if you want to load settings from YAML file, otherwise settings are loaded from environment variables")
+	flag.Parse()
+
+	if *configPath != "" {
+		globalConfig, err = config.LoadConfigFromFile(*configPath)
+		failOnError(err, "Failed to load config from file")
+	} else {
+		globalConfig, err = config.LoadConfigFromEnv()
+		failOnError(err, "Failed to load config from environment")
+	}
 
 	level, err := log.ParseLevel(strings.ToLower(globalConfig.LogLevel))
 	failOnError(err, "Failed to get log level")
 	log.SetLevel(level)
 
-	pipesList, err := config.LoadPipes(globalConfig.Kafka.PipesConfig)
-	failOnError(err, "Failed to get log level")
+	pipesList, err := config.LoadPipesFromFile(globalConfig.Kafka.PipesConfig)
+	failOnError(err, "Failed to load pipes config")
 
 	statsClient := stats.NewStatsdStatsClient(globalConfig.Stats.DSN, globalConfig.Stats.Prefix)
 	defer func() {

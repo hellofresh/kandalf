@@ -124,6 +124,9 @@ jobs:
     params:
       PROJECT_SRC: {{project_src}}
 
+  - task: create-deb
+    file: source-code/ci/tasks/create-deb.yml
+
   # Bump the rc version
   - put: version
     params:
@@ -136,6 +139,7 @@ jobs:
       tag: version/version
       globs:
       - artifacts/*.tar.gz
+      - artifacts/*.deb
 
 # Create Release
 #-----------------------------------------------------------------------------------------------------------------------
@@ -158,6 +162,7 @@ jobs:
       tag: version/version
       globs:
       - release-candidate/*.tar.gz
+      - release-candidate/*.deb
 
 # Docker Deployments
 #-----------------------------------------------------------------------------------------------------------------------

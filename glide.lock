@@ -1,8 +1,8 @@
-hash: 482e4f5e0b114dd06c4ad95d3650eac76d4e06751d795fc1028704c047220e0f
-updated: 2017-03-27T15:36:32.146630731+02:00
+hash: 9a4e8aca86e50ca59c27b5417118e56025efc6d0ca7e71e7f34c9c3ce5bda41c
+updated: 2017-03-28T17:14:15.850534644+02:00
 imports:
 - name: github.com/davecgh/go-spew
-  version: 346938d642f2ec3594ed81d874461961cd0faa76
+  version: 6d212800a42e8ab5c146b8ace3490ee17e5225f9
   subpackages:
   - spew
 - name: github.com/eapache/go-resiliency
@@ -53,4 +53,12 @@ imports:
   version: 7fea3f0d2fab1ad973e641e51dba45443a311a90
 - name: gopkg.in/yaml.v2
   version: 31c299268d302dd0aa9a0dcf765a3d58971ac83f
-testImports: []
+testImports:
+- name: github.com/pmezard/go-difflib
+  version: d8ed2627bdf02c080bf22230dbb337003b7aba2d
+  subpackages:
+  - difflib
+- name: github.com/stretchr/testify
+  version: 69483b4bd14f5845b5a1e55bca19e954e827f1d0
+  subpackages:
+  - assert

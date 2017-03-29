@@ -20,16 +20,26 @@ func (p Pipe) String() string {
 	return string(b)
 }
 
-// LoadPipes loads pipes config from file
-func LoadPipes(pipesConfigPath string) ([]Pipe, error) {
-	var pipes []Pipe
-
+// LoadPipesFromFile loads pipes config from file
+func LoadPipesFromFile(pipesConfigPath string) ([]Pipe, error) {
 	data, err := ioutil.ReadFile(pipesConfigPath)
 	if err != nil {
-		return pipes, err
+		return nil, err
 	}
 
-	if err = yaml.Unmarshal([]byte(data), &pipes); err != nil {
+	pipes, err := LoadPipesFromData(data)
+	if err != nil {
+		return nil, err
+	}
+
+	return pipes, nil
+}
+
+// LoadPipesFromData loads pipes config from data
+func LoadPipesFromData(data []byte) ([]Pipe, error) {
+	var pipes []Pipe
+
+	if err := yaml.Unmarshal(data, &pipes); err != nil {
 		return pipes, err
 	}
 

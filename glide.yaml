@@ -14,3 +14,8 @@ import:
   version: ^1.1.0
 - package: github.com/streadway/amqp
 - package: gopkg.in/yaml.v2
+testImport:
+- package: github.com/stretchr/testify
+  version: ^1.1.4
+  subpackages:
+  - assert

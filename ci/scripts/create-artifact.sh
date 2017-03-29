@@ -27,5 +27,7 @@ for i in ./*; do
 done
 
 # Copies the tar to the artifact folder so its available to the next step of the pipeline
-echo "Copying *.tar.gz ${CWD}/artifacts"
+echo "Copying *.tar.gz and default binary ${CWD}/artifacts"
 cp *.tar.gz ${CWD}/artifacts
+# Copy default binary to artifacts either - required for deb package build
+cp ${BINARY} ${CWD}/artifacts

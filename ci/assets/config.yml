@@ -1,0 +1,21 @@
+---
+# Available options are: "debug", "info", "warning", "error", "fatal" and "panic"
+log_level: "info"
+rabbit_dsn: "amqp://user:password@rmq"
+storage_dsn: "redis://redis.local/?key=storage:key"
+kafka:
+  brokers:
+    - "192.0.0.1:9092"
+    - "192.0.0.2:9092"
+  # The total number of times to retry sending a message.
+  # Should be similar to the `message.send.max.retries` setting of the JVM producer.
+  max_retry: 5
+  pipes_config: "/etc/kandalf/conf/pipes.yml"
+stats:
+  dsn: "statsd.local:8125"
+  prefix: "kandalf"
+worker:
+  cycle_timeout: "2s"
+  cache_size: 10
+  cache_flush_timeout: "5s"
+  storage_read_timeout: "10s"

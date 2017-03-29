@@ -3,19 +3,15 @@ platform: linux
 
 image_resource:
   type: docker-image
-  source:
-    repository: tenzer/fpm
+  source: {repository: tenzer/fpm}
 
 inputs:
   - name: source-code
-  - name:       build
-
-run:
-  path:         app-master/ci/scripts/create-deb.sh
+  - name: version
+  - name: artifacts
 
 outputs:
-  - name:       artifacts
+  - name: packages
 
-inputs:
-  - name:       app-master
-  - name:       build
+run:
+  path: source-code/ci/scripts/create-deb.sh

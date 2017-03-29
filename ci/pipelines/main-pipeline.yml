@@ -118,7 +118,9 @@ jobs:
     trigger: true
     passed: [run-unit-tests]
 
-  # Create a release artifact
+  - get: version
+
+  # Create the rc artifact
   - task: create-artifact
     file: source-code/ci/tasks/create-artifact.yml
     params:
@@ -127,11 +129,6 @@ jobs:
   - task: create-deb
     file: source-code/ci/tasks/create-deb.yml
 
-  # Bump the rc version
-  - put: version
-    params:
-      pre: 'rc'
-
   # Upload a release candidate to GitHub
   - put: release-candidate
     params:
@@ -139,7 +136,12 @@ jobs:
       tag: version/version
       globs:
       - artifacts/*.tar.gz
-      - artifacts/*.deb
+      - packages/*.deb
+
+  # Bump the rc version
+  - put: version
+    params:
+      pre: 'rc'
 
 # Create Release
 #-----------------------------------------------------------------------------------------------------------------------

@@ -14,6 +14,15 @@ case "$1" in
     if [ -x /bin/systemctl ]; then
       systemctl enable kandalf.service >/dev/null 2>&1 || true
     fi
+
+    ps aux | grep kandalf | grep -v grep >/dev/null 2>&1
+    if [ $? -eq 0 ]; then
+      if [ -x /bin/systemctl ]; then
+        systemctl restart kandalf.service
+      else
+        service kandalf restart
+      fi
+    fi
     ;;
 
   abort-upgrade|abort-remove|abort-deconfigure)

@@ -71,7 +71,7 @@ type KafkaConfig struct {
 	// MaxRetry is total number of times to retry sending a message to Kafka, default is 5
 	MaxRetry int `yaml:"max_retry" envconfig:"KAFKA_MAX_RETRY" default:"5"`
 	// PipesConfig is a path to rabbit-kafka bridge mappings config.
-	// This must be YAML file with teh following structure:
+	// This must be YAML file with the following structure:
 	//
 	//  ---
 	//  - rabbitmq_exchange_name: "customers"     # Message from that RabbitMQ exchange

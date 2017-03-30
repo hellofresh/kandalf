@@ -18,9 +18,9 @@ all: clean deps build
 
 deps:
 	@echo "$(OK_COLOR)==> Installing glide dependencies$(NO_COLOR)"
-	go get -u github.com/Masterminds/glide
-	go get -u github.com/golang/lint/golint
-	glide install
+	@go get -u github.com/Masterminds/glide
+	@go get -u github.com/golang/lint/golint
+	@glide install
 
 build:
 	@echo "$(OK_COLOR)==> Building... $(NO_COLOR)"

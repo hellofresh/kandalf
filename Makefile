@@ -24,19 +24,19 @@ deps:
 
 build:
 	@echo "$(OK_COLOR)==> Building... $(NO_COLOR)"
-	/bin/sh -c "ARCH=$(ARCH) PKG_SRC=$(PKG_SRC) ./build/build.sh"
+	/bin/sh -c "ARCH=$(ARCH) VERSION=${VERSION} PKG_SRC=$(PKG_SRC) ./build/build.sh"
 
 test:
 	@/bin/sh -c "./build/test.sh $(allpackages)"
 
 lint:
 	@echo "$(OK_COLOR)==> Linting... $(NO_COLOR)"
-	golint $(allpackages)
+	@golint $(allpackages)
 
 clean:
 	@echo "$(OK_COLOR)==> Cleaning project$(NO_COLOR)"
-	go clean
-	rm -rf bin $GOPATH/bin
+	@go clean
+	@rm -rf bin $GOPATH/bin
 
 # cd into the GOPATH to workaround ./... not following symlinks
 _allpackages = $(shell ( go list ./... 2>&1 1>&3 | \

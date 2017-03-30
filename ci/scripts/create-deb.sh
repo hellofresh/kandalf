@@ -3,8 +3,10 @@
 set -e -u
 
 CWD=$(pwd)
-VERSION=$(cat ./version/version | sed 's/-.*$//g')
 APP_NAME=kandalf
+
+VERSION=$(cat ./version/version | sed 's/-.*$//g')
+cd ./source-code/ && GITHASH=$(git rev-parse --short HEAD) && cd ${CWD}
 
 # Define variables
 DIR_ARTIFACTS="${CWD}/artifacts"
@@ -24,7 +26,7 @@ install -m 755 ${DIR_ARTIFACTS}/${APP_NAME} ${DIR_DEBIAN_TMP}/usr/local/bin
 # Build DEB package
 fpm --name ${APP_NAME} \
     --output-type deb \
-    --version ${VERSION} \
+    --version "${VERSION}-${GITHASH}" \
     --input-type dir \
     --chdir ${DIR_DEBIAN_TMP} \
     --package ${DIR_PACKAGES} \

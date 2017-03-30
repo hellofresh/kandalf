@@ -3,6 +3,7 @@ package main
 import (
 	"flag"
 	"net/url"
+	"os"
 	"strings"
 
 	log "github.com/Sirupsen/logrus"
@@ -20,14 +21,17 @@ func failOnError(err error, msg string) {
 	}
 }
 
+var version string
+
 func main() {
 	var (
 		globalConfig config.GlobalConfig
 		err          error
 	)
 
-	configPath := flag.String("c", "", "Path to config file, set if you want to load settings from YAML file, otherwise settings are loaded from environment variables")
-	flag.Parse()
+	flagSet := flag.NewFlagSet("Kandalf v"+version, flag.ExitOnError)
+	configPath := flagSet.String("c", "", "Path to config file, set if you want to load settings from YAML file, otherwise settings are loaded from environment variables")
+	flagSet.Parse(os.Args[1:])
 
 	if *configPath != "" {
 		globalConfig, err = config.LoadConfigFromFile(*configPath)

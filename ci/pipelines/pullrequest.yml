@@ -10,11 +10,6 @@ resource_types:
   source:
     repository: jtarchie/pr
 
-- name: github-release
-  type: docker-image
-  source:
-    repository: quay.io/hellofresh/gh-status-dynamic
-
 #-----------------------------------------------------------------------------------------------------------------------
 # Resources
 #-----------------------------------------------------------------------------------------------------------------------
@@ -26,23 +21,6 @@ resources:
     uri: {{github_repository_uri}}
     repo: {{github_pr_repository}}
     access_token: {{github_access_token}}
-
-- name: dev-build
-  type: github-release
-  source:
-    user: {{github_organization}}
-    repository: {{github_repository}}
-    access_token: {{github_access_token}}
-    pre_release: true
-
-- name: version
-  type: semver
-  source:
-    driver: git
-    initial_version: 0.0.0-rc.1
-    uri: {{github_repository_uri}}
-    branch: version
-    file: version
 
 #-----------------------------------------------------------------------------------------------------------------------
 # Jobs
@@ -86,40 +64,3 @@ jobs:
         path: source-code
         context: unit-tests
         status: failure
-
-# Create Dev Build
-#-----------------------------------------------------------------------------------------------------------------------
-- name: create-dev-build
-  public: false
-  serial: true
-  plan:
-
-  # Trigger build on master update
-  - get: source-code
-    trigger: true
-    passed: [run-unit-tests]
-
-  - get: version
-
-  # Create a release artifact
-  - task: create-artifact
-    file: source-code/ci/tasks/create-artifact.yml
-    params:
-      PROJECT_SRC: {{project_src}}
-
-  - task: create-deb
-    file: source-code/ci/tasks/create-deb.yml
-
-  # Upload a dev build to GitHub
-  - put: dev-build
-    params:
-      name: version/version
-      tag: version/version
-      globs:
-      - artifacts/*.tar.gz
-      - packages/*.deb
-
-  # Bump the dev version
-  - put: version
-    params:
-      pre: 'dev'

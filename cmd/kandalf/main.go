@@ -1,97 +1,95 @@
 package main
 
 import (
-	"fmt"
+	"flag"
+	"net/url"
 	"os"
-	"os/signal"
-	"sync"
-	"syscall"
+	"strings"
 
-	"github.com/urfave/cli"
-
-	"github.com/hellofresh/kandalf/config"
-	"github.com/hellofresh/kandalf/logger"
-	"github.com/hellofresh/kandalf/pipes"
-	"github.com/hellofresh/kandalf/statsd"
-	"github.com/hellofresh/kandalf/workers"
+	log "github.com/Sirupsen/logrus"
+	"github.com/hellofresh/kandalf/pkg/amqp"
+	"github.com/hellofresh/kandalf/pkg/config"
+	"github.com/hellofresh/kandalf/pkg/kafka"
+	"github.com/hellofresh/kandalf/pkg/storage"
+	"github.com/hellofresh/kandalf/pkg/workers"
+	"github.com/hellofresh/stats-go"
 )
 
-// Instantiates new application and launches it
-func main() {
-	app := cli.NewApp()
-
-	app.Name = "kandalf"
-	app.Usage = "Daemon that reads all messages from RabbitMQ and puts them to kafka"
-	// This will be replaced by `_build/codeship/publish-release.sh`
-	app.Version = "%app.version%"
-	app.Authors = []cli.Author{
-		{
-			Name:  "Nikita Vershinin",
-			Email: "endeveit@gmail.com",
-		},
-	}
-	app.Flags = []cli.Flag{
-		cli.StringFlag{
-			Name:  "config, c",
-			Value: "/etc/kandalf/config.yml",
-			Usage: "Path to the configuration file",
-		},
-		cli.StringFlag{
-			Name:  "pipes, p",
-			Value: "/etc/kandalf/pipes.yml",
-			Usage: "Path to file with pipes rules",
-		},
-	}
-	app.Action = actionRun
-
-	err := app.Run(os.Args)
+func failOnError(err error, msg string) {
 	if err != nil {
-		fmt.Fprintf(os.Stderr, "Unhandled error occurred while running application: %v\n", err)
+		log.WithError(err).Panic(msg)
 	}
 }
 
-// Runs the application
-func actionRun(ctx *cli.Context) error {
+var version string
+
+func main() {
 	var (
-		wg      *sync.WaitGroup = &sync.WaitGroup{}
-		die     chan bool       = make(chan bool, 1)
-		pConfig string          = ctx.String("config")
-		pPipes  string          = ctx.String("pipes")
+		globalConfig config.GlobalConfig
+		err          error
 	)
 
-	doReload(pConfig, pPipes)
+	flagSet := flag.NewFlagSet("Kandalf v"+version, flag.ExitOnError)
+	configPath := flagSet.String("c", "", "Path to config file, set if you want to load settings from YAML file, otherwise settings are loaded from environment variables")
+	flagSet.Parse(os.Args[1:])
 
-	worker := workers.NewWorker()
-	ch := make(chan os.Signal, 1)
-	signal.Notify(ch, os.Interrupt, syscall.SIGHUP)
+	if *configPath != "" {
+		globalConfig, err = config.LoadConfigFromFile(*configPath)
+		failOnError(err, "Failed to load config from file")
+	} else {
+		globalConfig, err = config.LoadConfigFromEnv()
+		failOnError(err, "Failed to load config from environment")
+	}
 
-	go func() {
-		for {
-			sig := <-ch
-			switch sig {
-			case os.Interrupt:
-				logger.Instance().Info("Got interrupt signal. Will stop the work")
-				close(die)
-			case syscall.SIGHUP:
-				logger.Instance().Info("Got SIGHUP. Will reload config and pipes")
-				doReload(pConfig, pPipes)
+	level, err := log.ParseLevel(strings.ToLower(globalConfig.LogLevel))
+	failOnError(err, "Failed to get log level")
+	log.SetLevel(level)
 
-				worker.Reload()
-			}
+	pipesList, err := config.LoadPipesFromFile(globalConfig.Kafka.PipesConfig)
+	failOnError(err, "Failed to load pipes config")
+
+	statsClient := stats.NewStatsdStatsClient(globalConfig.Stats.DSN, globalConfig.Stats.Prefix)
+	defer func() {
+		if err := statsClient.Close(); err != nil {
+			log.WithError(err).Error("Got error on closing stats client")
 		}
 	}()
 
-	// Here be dragons
-	wg.Add(1)
-	go worker.Run(wg, die)
-	wg.Wait()
+	storageURL, err := url.Parse(globalConfig.StorageDSN)
+	failOnError(err, "Failed to parse Storage DSN")
 
-	return nil
-}
+	persistentStorage, err := storage.NewPersistentStorage(storageURL)
+	failOnError(err, "Failed to establish Redis connection")
+	// Do not close storage here as it is required in Worker close to store unhandled messages
 
-// Reloads configuration and lists of available pipes
-func doReload(pConfig, pPipes string) {
-	cnf := config.Instance(pConfig)
-	_ = pipes.All(pPipes)
-	_ = statsd.Instance(cnf)
+	producer, err := kafka.NewProducer(globalConfig.Kafka, statsClient)
+	failOnError(err, "Failed to establish Kafka connection")
+	defer func() {
+		if err := producer.Close(); err != nil {
+			log.WithError(err).Error("Got error on closing kafka producer")
+		}
+	}()
+
+	worker, err := workers.NewBridgeWorker(globalConfig.Worker, persistentStorage, producer, statsClient)
+	defer func() {
+		if err := worker.Close(); err != nil {
+			log.WithError(err).Error("Got error on closing persistent storage")
+		}
+	}()
+
+	queuesHandler := amqp.NewQueuesHandler(pipesList, worker.MessageHandler, statsClient)
+	amqpConnection, err := amqp.NewConnection(globalConfig.RabbitDSN, queuesHandler)
+	failOnError(err, "Failed to establish initial connection to AMQP")
+	defer func() {
+		if err := amqpConnection.Close(); err != nil {
+			log.WithError(err).Error("Got error on closing AMQP connection")
+		}
+	}()
+
+	forever := make(chan bool)
+
+	worker.Go(forever)
+
+	log.Infof("[*] Waiting for users. To exit press CTRL+C")
+	<-forever
 }

@@ -1,0 +1,47 @@
+# DO NOT USE IN PRODUCTION. THIS FILE IS ONLY FOR TESTING PURPOSES.
+version: "2"
+services:
+    kandalf:
+        image: quay.io/hellofresh/kandalf
+        volumes:
+            - "./_build/out/linux:/app"
+            - "./_build/resources:/config"
+        environment:
+            LOG_LEVEL: "debug"
+            RABBIT_DSN: "kandalf-rabbit:5672"
+            STORAGE_DSN: "redis://kandalf-redis:6379/?key=kandalf"
+            KAFKA_BROKERS: "kandalf-kafka:9092"
+        links:
+            - kafka
+            - redis
+            - rmq
+        networks:
+            - kandalf
+
+    kandalf-kafka:
+        image: spotify/kafka
+        ports:
+            - 9092
+        environment:
+            TOPICS: "new-orders,loyalty"
+        networks:
+            - kandalf
+
+    kandalf-redis:
+        image: redis:3.2-alpine
+        ports:
+            - 6379
+        networks:
+            - kandalf
+
+    kandalf-rabbit:
+        image: rabbitmq:3.6-management-alpine
+        ports:
+            - 5672
+            - 15672
+        networks:
+            - kandalf
+
+networks:
+    kandalf:
+        driver: bridge

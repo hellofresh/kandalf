@@ -27,6 +27,7 @@ func assertConfig(t *testing.T, globalConfig GlobalConfig) {
 	assert.Equal(t, 10, globalConfig.Worker.CacheSize)
 	assert.Equal(t, "5s", globalConfig.Worker.CacheFlushTimeout.String())
 	assert.Equal(t, "10s", globalConfig.Worker.StorageReadTimeout.String())
+	assert.Equal(t, 10, globalConfig.Worker.StorageMaxErrors)
 }
 
 func TestLoadConfigFromData(t *testing.T) {
@@ -49,6 +50,7 @@ worker:
   cache_size: 10
   cache_flush_timeout: "5s"
   storage_read_timeout: "10s"
+  storage_max_errors: 10
 `)
 	globalConfig, err := LoadConfigFromData(data)
 	assert.Nil(t, err)
@@ -76,6 +78,7 @@ worker:
   cache_size: 10
   cache_flush_timeout: "5s"
   storage_read_timeout: "10s"
+  storage_max_errors: 10
 `)
 	_, err := LoadConfigFromData(data)
 	assert.NotEmpty(t, err)
@@ -112,6 +115,7 @@ func setGlobalConfigEnv() {
 	os.Setenv("WORKER_CACHE_SIZE", "10")
 	os.Setenv("WORKER_CACHE_FLUSH_TIMEOUT", "5s")
 	os.Setenv("WORKER_STORAGE_READ_TIMEOUT", "10s")
+	os.Setenv("WORKER_STORAGE_MAX_ERRORS", "10")
 }
 
 func TestLoadConfigFromEnv(t *testing.T) {

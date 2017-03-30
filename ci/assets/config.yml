@@ -18,3 +18,4 @@ worker:
   cache_size: 10
   cache_flush_timeout: "5s"
   storage_read_timeout: "10s"
+  storage_max_errors: 10

@@ -73,14 +73,14 @@ func (w *BridgeWorker) Go(interrupt chan bool) {
 			case <-interrupt:
 				return
 			case <-w.readStorageTicker.C:
-				w.populatePoolFromStorage()
+				w.populateCacheFromStorage()
 			default:
 				w.Execute()
 			}
 
 			// Prevent CPU overload
 			log.WithField("timeout", w.config.CycleTimeout).Debug("Bridge worker is going to sleep for a while")
-			time.Sleep(time.Second * w.config.CycleTimeout.Duration)
+			time.Sleep(w.config.CycleTimeout.Duration)
 		}
 	}()
 }
@@ -121,10 +121,19 @@ func (w *BridgeWorker) cacheMessage(msg *kafka.Message) error {
 	return nil
 }
 
-func (w *BridgeWorker) populatePoolFromStorage() {
-	var msg kafka.Message
+func (w *BridgeWorker) populateCacheFromStorage() {
+	var (
+		msg         kafka.Message
+		errorsCount int
+	)
 
 	for {
+		if errorsCount >= w.config.StorageMaxErrors {
+			log.WithField("errors_count", errorsCount).
+				Error("Got several errors in a row while reading from storage, stoppong reading")
+			break
+		}
+
 		operation := stats.MetricOperation{"storage", "get", stats.MetricEmptyPlaceholder}
 		storageMsg, err := w.storage.Get()
 		if err != nil {
@@ -133,9 +142,11 @@ func (w *BridgeWorker) populatePoolFromStorage() {
 			}
 			log.WithError(err).Error("Failed to read message from persistent storage")
 			w.statsClient.TrackOperation(statsWorkerSection, operation, nil, false)
+			errorsCount++
 			continue
 		}
 		w.statsClient.TrackOperation(statsWorkerSection, operation, nil, true)
+		errorsCount = 0
 
 		operation = stats.MetricOperation{"storage", "unmarshal", stats.MetricEmptyPlaceholder}
 		err = json.Unmarshal(storageMsg, msg)

@@ -6,6 +6,10 @@ import (
 	"github.com/go-redis/redis"
 )
 
+// this error is in "github.com/go-redis/redis/internal" that is not possible to import,
+// so define it as constant here
+const errRedisNil = "redis: nil"
+
 // RedisStorage is a PersistentStorage interface implementation for Redis DB
 type RedisStorage struct {
 	rc  *redis.Client
@@ -14,13 +18,15 @@ type RedisStorage struct {
 
 // NewRedisStorage instantiates and establishes connection to Redis storage
 func NewRedisStorage(dsn *url.URL, key string) (*RedisStorage, error) {
-	options := &redis.Options{Addr: dsn.Host}
-	if password, isSet := dsn.User.Password(); isSet {
-		options.Password = password
+	// clear raw query as redis.ParseURL() does not play with query params
+	dsn.RawQuery = ""
+	options, err := redis.ParseURL(dsn.String())
+	if err != nil {
+		return nil, err
 	}
 
 	rc := redis.NewClient(options)
-	_, err := rc.Ping().Result()
+	_, err = rc.Ping().Result()
 	if err != nil {
 		return nil, err
 	}
@@ -37,6 +43,10 @@ func (s *RedisStorage) Put(data []byte) error {
 func (s *RedisStorage) Get() ([]byte, error) {
 	data, err := s.rc.LPop(s.key).Bytes()
 	if err != nil {
+		// key is not defined (no data were persisted yet) - LPOP returns nil
+		if err.Error() == errRedisNil {
+			return nil, ErrStorageIsEmpty
+		}
 		return nil, err
 	}
 	if len(data) == 0 {

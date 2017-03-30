@@ -109,6 +109,9 @@ type WorkerConfig struct {
 	// ReadTimeout is timeout between attempts of reading persisted messages from storage
 	// to publish them to Kafka, must be at least 2x greater than CycleTimeout
 	StorageReadTimeout Duration `yaml:"storage_read_timeout" envconfig:"WORKER_STORAGE_READ_TIMEOUT" default:"10s"`
+	// StorageMaxErrors is max storage read errors in a row before worker stops trying reading in current
+	// read cycle. Next read cycle will be in "StorageReadTimeout" interval.
+	StorageMaxErrors int `yaml:"storage_max_errors" envconfig:"WORKER_STORAGE_MAX_ERRORS" default:"10"`
 }
 
 var instance GlobalConfig

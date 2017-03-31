@@ -48,7 +48,7 @@ func (w *BridgeWorker) Execute() {
 
 	w.Lock()
 	defer w.Unlock()
-	if len(w.cache) >= w.config.CacheSize || time.Now().Sub(w.lastFlush) >= w.config.CacheFlushTimeout.Duration {
+	if len(w.cache) >= w.config.CacheSize || time.Now().Sub(w.lastFlush) >= w.config.CacheFlushTimeout {
 		log.WithFields(log.Fields{"len": len(w.cache), "last_flush": w.lastFlush}).
 			Debug("Flushing worker cache to Kafka")
 
@@ -65,7 +65,7 @@ func (w *BridgeWorker) Execute() {
 
 // Go runs the service forever in async way in go-routine
 func (w *BridgeWorker) Go(interrupt chan bool) {
-	w.readStorageTicker = time.NewTicker(w.config.StorageReadTimeout.Duration)
+	w.readStorageTicker = time.NewTicker(w.config.StorageReadTimeout)
 
 	go func() {
 		for {
@@ -80,7 +80,7 @@ func (w *BridgeWorker) Go(interrupt chan bool) {
 
 			// Prevent CPU overload
 			log.WithField("timeout", w.config.CycleTimeout).Debug("Bridge worker is going to sleep for a while")
-			time.Sleep(w.config.CycleTimeout.Duration)
+			time.Sleep(w.config.CycleTimeout)
 		}
 	}()
 }

@@ -8,7 +8,7 @@ import (
 
 	log "github.com/Sirupsen/logrus"
 	"github.com/hellofresh/kandalf/pkg/config"
-	"github.com/hellofresh/kandalf/pkg/kafka"
+	"github.com/hellofresh/kandalf/pkg/producer"
 	"github.com/hellofresh/kandalf/pkg/storage"
 	"github.com/hellofresh/stats-go"
 )
@@ -29,22 +29,22 @@ type BridgeWorker struct {
 
 	config      config.WorkerConfig
 	storage     storage.PersistentStorage
-	producer    *kafka.Producer
+	producer    producer.Producer
 	statsClient stats.StatsClient
 
-	cache             []*kafka.Message
+	cache             []*producer.Message
 	lastFlush         time.Time
 	readStorageTicker *time.Ticker
 }
 
 // NewBridgeWorker creates instance of BridgeWorker
-func NewBridgeWorker(config config.WorkerConfig, storage storage.PersistentStorage, producer *kafka.Producer, statsClient stats.StatsClient) (*BridgeWorker, error) {
+func NewBridgeWorker(config config.WorkerConfig, storage storage.PersistentStorage, producer producer.Producer, statsClient stats.StatsClient) (*BridgeWorker, error) {
 	return &BridgeWorker{config: config, storage: storage, producer: producer, statsClient: statsClient}, nil
 }
 
 // Execute runs the service logic once in sync way
 func (w *BridgeWorker) Execute() {
-	var messages []*kafka.Message
+	var messages []*producer.Message
 
 	w.Lock()
 	defer w.Unlock()
@@ -56,7 +56,7 @@ func (w *BridgeWorker) Execute() {
 			// copy workers cache to local cache to avoid long locking for worker cache,
 			// as all incoming messages will be waiting for network communication with kafka/storage
 			copy(messages, w.cache)
-			w.cache = []*kafka.Message{}
+			w.cache = []*producer.Message{}
 			go w.publishMessages(messages)
 		}
 		w.lastFlush = time.Now()
@@ -106,10 +106,10 @@ func (w *BridgeWorker) Close() error {
 
 // MessageHandler is a handler function for new messages from AMQP
 func (w *BridgeWorker) MessageHandler(body []byte, pipe config.Pipe) error {
-	return w.cacheMessage(kafka.NewMessage(body, pipe.KafkaTopic))
+	return w.cacheMessage(producer.NewMessage(body, pipe.KafkaTopic))
 }
 
-func (w *BridgeWorker) cacheMessage(msg *kafka.Message) error {
+func (w *BridgeWorker) cacheMessage(msg *producer.Message) error {
 	w.Lock()
 	defer w.Unlock()
 
@@ -123,7 +123,7 @@ func (w *BridgeWorker) cacheMessage(msg *kafka.Message) error {
 
 func (w *BridgeWorker) populateCacheFromStorage() {
 	var (
-		msg         kafka.Message
+		msg         producer.Message
 		errorsCount int
 	)
 
@@ -161,7 +161,7 @@ func (w *BridgeWorker) populateCacheFromStorage() {
 	}
 }
 
-func (w *BridgeWorker) publishMessages(messages []*kafka.Message) {
+func (w *BridgeWorker) publishMessages(messages []*producer.Message) {
 	for _, msg := range messages {
 		err := w.producer.Publish(*msg)
 		if err != nil {
@@ -182,7 +182,7 @@ func (w *BridgeWorker) publishMessages(messages []*kafka.Message) {
 	}
 }
 
-func (w *BridgeWorker) storeMessage(msg *kafka.Message) error {
+func (w *BridgeWorker) storeMessage(msg *producer.Message) error {
 	data, err := json.Marshal(msg)
 
 	operation := stats.MetricOperation{"storage", "marshal", stats.MetricEmptyPlaceholder}

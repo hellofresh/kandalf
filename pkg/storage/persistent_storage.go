@@ -12,6 +12,8 @@ var (
 	ErrStorageIsEmpty = errors.New("No more messages in storage")
 	// ErrUnknownStorage is an error raised in case when trying to instantiate storage of unknown type
 	ErrUnknownStorage = errors.New("Unknown storage type")
+	// ErrRedisKeyMissed is an error raised when 'key' parameter is missing for redis storage type
+	ErrRedisKeyMissed = errors.New("Redis storage requires 'key' parameter")
 )
 
 // PersistentStorage is an interface for persistent storage
@@ -32,7 +34,7 @@ func NewPersistentStorage(dsn *url.URL) (PersistentStorage, error) {
 	switch dsn.Scheme {
 	case "redis":
 		if len(dsn.Query().Get("key")) < 1 {
-			return nil, errors.New("Redis storage requires 'key' parameter")
+			return nil, ErrRedisKeyMissed
 		}
 		return NewRedisStorage(dsn, dsn.Query().Get("key"))
 	}

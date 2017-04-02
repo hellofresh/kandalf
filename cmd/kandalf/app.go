@@ -7,7 +7,7 @@ import (
 	log "github.com/Sirupsen/logrus"
 	"github.com/hellofresh/kandalf/pkg/amqp"
 	"github.com/hellofresh/kandalf/pkg/config"
-	"github.com/hellofresh/kandalf/pkg/kafka"
+	"github.com/hellofresh/kandalf/pkg/producer"
 	"github.com/hellofresh/kandalf/pkg/storage"
 	"github.com/hellofresh/kandalf/pkg/workers"
 	"github.com/hellofresh/stats-go"
@@ -49,15 +49,15 @@ func RunApp(cmd *cobra.Command, args []string) {
 	failOnError(err, "Failed to establish Redis connection")
 	// Do not close storage here as it is required in Worker close to store unhandled messages
 
-	producer, err := kafka.NewProducer(globalConfig.Kafka, statsClient)
+	kafkaProducer, err := producer.NewKafkaProducer(globalConfig.Kafka, statsClient)
 	failOnError(err, "Failed to establish Kafka connection")
 	defer func() {
-		if err := producer.Close(); err != nil {
+		if err := kafkaProducer.Close(); err != nil {
 			log.WithError(err).Error("Got error on closing kafka producer")
 		}
 	}()
 
-	worker, err := workers.NewBridgeWorker(globalConfig.Worker, persistentStorage, producer, statsClient)
+	worker, err := workers.NewBridgeWorker(globalConfig.Worker, persistentStorage, kafkaProducer, statsClient)
 	defer func() {
 		if err := worker.Close(); err != nil {
 			log.WithError(err).Error("Got error on closing persistent storage")

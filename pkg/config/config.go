@@ -99,7 +99,7 @@ func Load(configPath string) (*GlobalConfig, error) {
 	}
 
 	if err := viper.ReadInConfig(); err != nil {
-		log.WithError(err).Warn("No config file found")
+		log.WithError(err).Warn("No config file found, loading config from environment variables")
 		return LoadConfigFromEnv()
 	}
 	log.WithField("path", viper.ConfigFileUsed()).Info("Config loaded from file")

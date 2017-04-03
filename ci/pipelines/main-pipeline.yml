@@ -145,44 +145,44 @@ jobs:
 
 # Staging Deployments
 #-----------------------------------------------------------------------------------------------------------------------
-#- name: staging-deployment
-#  public: false
-#  serial: true
-#  plan:
-#
-#  # Trigger a deployment after a release candidate has been created
-#  - get: release-candidate
-#    trigger: true
-#    passed: [create-release-candidate]
-#
-#  # Get the application source for the scripts
-#  - get: source-code
-#
-#  # Get automation so that we can deploy to staging
-#  - get: automation-source-code
-#
-#  # Deploy the release candidate to staging
-#  - task: deploy
-#    file: source-code/ci/tasks/deploy-staging.yml
-#    params:
-#      DEPLOYMENT_PRIVATE_KEY: {{automation_private_key}}
-#      DEPLOYMENT_ENVIRONMENT: staging
-#      GROUP_NAME: {{automation_group_name}}
-#      VPASS: {{automation_vpass}}
-#
-#    # Notify the slack channel of deployment success
-#    on_failure:
-#      put: slack-alert
-#      params:
-#        channel: {{slack_channel}}
-#        text: {{slack_staging_failure_text}}
-#
-#    # Notify the slack channel of deployment failure
-#    on_success:
-#      put: slack-alert
-#      params:
-#        channel: {{slack_channel}}
-#        text: {{slack_staging_success_text}}
+- name: staging-deployment
+  public: false
+  serial: true
+  plan:
+
+  # Trigger a deployment after a release candidate has been created
+  - get: release-candidate
+    trigger: true
+    passed: [create-release-candidate]
+
+  # Get the application source for the scripts
+  - get: source-code
+
+  # Get automation so that we can deploy to staging
+  - get: automation-source-code
+
+  # Deploy the release candidate to staging
+  - task: deploy
+    file: source-code/ci/tasks/deploy-staging.yml
+    params:
+      DEPLOYMENT_PRIVATE_KEY: {{automation_private_key}}
+      DEPLOYMENT_ENVIRONMENT: staging
+      GROUP_NAME: {{automation_group_name}}
+      VPASS: {{automation_vpass}}
+
+    # Notify the slack channel of deployment success
+    on_failure:
+      put: slack-alert
+      params:
+        channel: {{slack_channel}}
+        text: {{slack_staging_failure_text}}
+
+    # Notify the slack channel of deployment failure
+    on_success:
+      put: slack-alert
+      params:
+        channel: {{slack_channel}}
+        text: {{slack_staging_success_text}}
 
 # Docker Deployments
 #-----------------------------------------------------------------------------------------------------------------------

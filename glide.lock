@@ -1,5 +1,5 @@
-hash: d06a33d1fec6c1074376b95c3cfcff763915c637b801f0211880ba8f6526babe
-updated: 2017-03-31T15:01:01.067051439+02:00
+hash: 10cf006ecff4795113057b023c0853cb3c892d87ae353fd60b34569afccb5853
+updated: 2017-04-03T11:37:07.701843224+02:00
 imports:
 - name: github.com/davecgh/go-spew
   version: 6d212800a42e8ab5c146b8ace3490ee17e5225f9
@@ -15,14 +15,11 @@ imports:
   version: 44cc805cf13205b55f69e14bcb69867d1ae92f98
 - name: github.com/fsnotify/fsnotify
   version: 629574ca2a5df945712d3079857300b5e4da0236
-- name: github.com/go-redis/redis
-  version: 2cf5af9928978bbef8d1076607022403439e177c
+- name: github.com/garyburd/redigo
+  version: 8873b2f1995f59d4bcdd2b0dc9858e2cb9bf0c13
   subpackages:
   - internal
-  - internal/consistenthash
-  - internal/hashtag
-  - internal/pool
-  - internal/proto
+  - redis
 - name: github.com/golang/snappy
   version: d9eb7a3d35ec988b8585d4a0068e462c27d28380
 - name: github.com/hashicorp/hcl
@@ -100,6 +97,8 @@ testImports:
   version: d8ed2627bdf02c080bf22230dbb337003b7aba2d
   subpackages:
   - difflib
+- name: github.com/rafaeljusto/redigomock
+  version: ca49a8af34fc0c903a37409317576da14b3f1cbd
 - name: github.com/stretchr/testify
   version: 69483b4bd14f5845b5a1e55bca19e954e827f1d0
   subpackages:

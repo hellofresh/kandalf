@@ -4,8 +4,10 @@ import:
   version: ^1.11.0
 - package: github.com/Sirupsen/logrus
   version: ^0.11.5
-- package: github.com/go-redis/redis
-  version: ^6.0.0
+- package: github.com/garyburd/redigo
+  version: ^1.0.0
+  subpackages:
+  - redis
 - package: github.com/hellofresh/stats-go
   version: ^0.1.2
 - package: github.com/kelseyhightower/envconfig
@@ -15,8 +17,9 @@ import:
 - package: github.com/spf13/cobra
 - package: github.com/spf13/viper
 - package: github.com/streadway/amqp
-- package: gopkg.in/yaml.v2
 testImport:
+- package: github.com/rafaeljusto/redigomock
+  version: ^2.0.0
 - package: github.com/stretchr/testify
   version: ^1.1.4
   subpackages:

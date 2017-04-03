@@ -127,6 +127,7 @@ func (w *BridgeWorker) populateCacheFromStorage() {
 		errorsCount int
 	)
 
+	log.Debug("Papulating cache from storage")
 	for {
 		if errorsCount >= w.config.StorageMaxErrors {
 			log.WithField("errors_count", errorsCount).

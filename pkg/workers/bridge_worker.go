@@ -44,10 +44,9 @@ func NewBridgeWorker(config config.WorkerConfig, storage storage.PersistentStora
 
 // Execute runs the service logic once in sync way
 func (w *BridgeWorker) Execute() {
-	var messages []*producer.Message
-
 	w.Lock()
 	defer w.Unlock()
+
 	if len(w.cache) >= w.config.CacheSize || time.Now().Sub(w.lastFlush) >= w.config.CacheFlushTimeout {
 		log.WithFields(log.Fields{"len": len(w.cache), "last_flush": w.lastFlush}).
 			Debug("Flushing worker cache to Kafka")
@@ -55,8 +54,10 @@ func (w *BridgeWorker) Execute() {
 		if len(w.cache) > 0 {
 			// copy workers cache to local cache to avoid long locking for worker cache,
 			// as all incoming messages will be waiting for network communication with kafka/storage
+			messages := make([]*producer.Message, len(w.cache))
 			copy(messages, w.cache)
 			w.cache = []*producer.Message{}
+
 			go w.publishMessages(messages)
 		}
 		w.lastFlush = time.Now()
@@ -122,10 +123,7 @@ func (w *BridgeWorker) cacheMessage(msg *producer.Message) error {
 }
 
 func (w *BridgeWorker) populateCacheFromStorage() {
-	var (
-		msg         producer.Message
-		errorsCount int
-	)
+	var errorsCount int
 
 	log.Debug("Papulating cache from storage")
 	for {
@@ -150,7 +148,8 @@ func (w *BridgeWorker) populateCacheFromStorage() {
 		errorsCount = 0
 
 		operation = stats.MetricOperation{"storage", "unmarshal", stats.MetricEmptyPlaceholder}
-		err = json.Unmarshal(storageMsg, msg)
+		var msg *producer.Message
+		err = json.Unmarshal(storageMsg, &msg)
 		if err != nil {
 			log.WithError(err).Error("Failed to unmarshal message from persistent storage")
 			w.statsClient.TrackOperation(statsWorkerSection, operation, nil, false)
@@ -158,7 +157,7 @@ func (w *BridgeWorker) populateCacheFromStorage() {
 		}
 		w.statsClient.TrackOperation(statsWorkerSection, operation, nil, true)
 
-		w.cacheMessage(&msg)
+		w.cacheMessage(msg)
 	}
 }
 

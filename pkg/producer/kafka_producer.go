@@ -1,4 +1,4 @@
-package kafka
+package producer
 
 import (
 	"github.com/Shopify/sarama"
@@ -11,33 +11,35 @@ const (
 	statsKafkaSection = "kafka"
 )
 
-// Producer contains connection data for Kafka
-type Producer struct {
+// KafkaProducer is a Producer implementation for publishing messages to Kafka
+type KafkaProducer struct {
 	kafkaClient sarama.SyncProducer
 	statsClient stats.StatsClient
 }
 
-// NewProducer instantiates and establishes new Kafka connection
-func NewProducer(kafkaConfig config.KafkaConfig, statsClient stats.StatsClient) (*Producer, error) {
+// NewKafkaProducer instantiates and establishes new Kafka connection
+func NewKafkaProducer(kafkaConfig config.KafkaConfig, statsClient stats.StatsClient) (Producer, error) {
 	cnf := sarama.NewConfig()
 	cnf.Producer.RequiredAcks = sarama.WaitForAll
 	cnf.Producer.Retry.Max = kafkaConfig.MaxRetry
+	// Producer.Return.Successes must be true to be used in a SyncProducer
+	cnf.Producer.Return.Successes = true
 
 	client, err := sarama.NewSyncProducer(kafkaConfig.Brokers, cnf)
 	if err != nil {
 		return nil, err
 	}
 
-	return &Producer{kafkaClient: client, statsClient: statsClient}, nil
+	return &KafkaProducer{kafkaClient: client, statsClient: statsClient}, nil
 }
 
 // Close closes Kafka connection
-func (p *Producer) Close() error {
+func (p *KafkaProducer) Close() error {
 	return p.kafkaClient.Close()
 }
 
 // Publish publishes message to Kafka
-func (p *Producer) Publish(msg Message) error {
+func (p *KafkaProducer) Publish(msg Message) error {
 	_, _, err := p.kafkaClient.SendMessage(&sarama.ProducerMessage{
 		Topic: msg.Topic,
 		Value: sarama.ByteEncoder(msg.Body),

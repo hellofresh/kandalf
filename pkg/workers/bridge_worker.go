@@ -8,7 +8,7 @@ import (
 
 	log "github.com/Sirupsen/logrus"
 	"github.com/hellofresh/kandalf/pkg/config"
-	"github.com/hellofresh/kandalf/pkg/kafka"
+	"github.com/hellofresh/kandalf/pkg/producer"
 	"github.com/hellofresh/kandalf/pkg/storage"
 	"github.com/hellofresh/stats-go"
 )
@@ -29,34 +29,35 @@ type BridgeWorker struct {
 
 	config      config.WorkerConfig
 	storage     storage.PersistentStorage
-	producer    *kafka.Producer
+	producer    producer.Producer
 	statsClient stats.StatsClient
 
-	cache             []*kafka.Message
+	cache             []*producer.Message
 	lastFlush         time.Time
 	readStorageTicker *time.Ticker
 }
 
 // NewBridgeWorker creates instance of BridgeWorker
-func NewBridgeWorker(config config.WorkerConfig, storage storage.PersistentStorage, producer *kafka.Producer, statsClient stats.StatsClient) (*BridgeWorker, error) {
+func NewBridgeWorker(config config.WorkerConfig, storage storage.PersistentStorage, producer producer.Producer, statsClient stats.StatsClient) (*BridgeWorker, error) {
 	return &BridgeWorker{config: config, storage: storage, producer: producer, statsClient: statsClient}, nil
 }
 
 // Execute runs the service logic once in sync way
 func (w *BridgeWorker) Execute() {
-	var messages []*kafka.Message
-
 	w.Lock()
 	defer w.Unlock()
-	if len(w.cache) >= w.config.CacheSize || time.Now().Sub(w.lastFlush) >= w.config.CacheFlushTimeout.Duration {
+
+	if len(w.cache) >= w.config.CacheSize || time.Now().Sub(w.lastFlush) >= w.config.CacheFlushTimeout {
 		log.WithFields(log.Fields{"len": len(w.cache), "last_flush": w.lastFlush}).
 			Debug("Flushing worker cache to Kafka")
 
 		if len(w.cache) > 0 {
 			// copy workers cache to local cache to avoid long locking for worker cache,
 			// as all incoming messages will be waiting for network communication with kafka/storage
+			messages := make([]*producer.Message, len(w.cache))
 			copy(messages, w.cache)
-			w.cache = []*kafka.Message{}
+			w.cache = []*producer.Message{}
+
 			go w.publishMessages(messages)
 		}
 		w.lastFlush = time.Now()
@@ -65,7 +66,7 @@ func (w *BridgeWorker) Execute() {
 
 // Go runs the service forever in async way in go-routine
 func (w *BridgeWorker) Go(interrupt chan bool) {
-	w.readStorageTicker = time.NewTicker(w.config.StorageReadTimeout.Duration)
+	w.readStorageTicker = time.NewTicker(w.config.StorageReadTimeout)
 
 	go func() {
 		for {
@@ -73,14 +74,14 @@ func (w *BridgeWorker) Go(interrupt chan bool) {
 			case <-interrupt:
 				return
 			case <-w.readStorageTicker.C:
-				w.populatePoolFromStorage()
+				w.populateCacheFromStorage()
 			default:
 				w.Execute()
 			}
 
 			// Prevent CPU overload
 			log.WithField("timeout", w.config.CycleTimeout).Debug("Bridge worker is going to sleep for a while")
-			time.Sleep(time.Second * w.config.CycleTimeout.Duration)
+			time.Sleep(w.config.CycleTimeout)
 		}
 	}()
 }
@@ -106,10 +107,10 @@ func (w *BridgeWorker) Close() error {
 
 // MessageHandler is a handler function for new messages from AMQP
 func (w *BridgeWorker) MessageHandler(body []byte, pipe config.Pipe) error {
-	return w.cacheMessage(kafka.NewMessage(body, pipe.KafkaTopic))
+	return w.cacheMessage(producer.NewMessage(body, pipe.KafkaTopic))
 }
 
-func (w *BridgeWorker) cacheMessage(msg *kafka.Message) error {
+func (w *BridgeWorker) cacheMessage(msg *producer.Message) error {
 	w.Lock()
 	defer w.Unlock()
 
@@ -121,10 +122,17 @@ func (w *BridgeWorker) cacheMessage(msg *kafka.Message) error {
 	return nil
 }
 
-func (w *BridgeWorker) populatePoolFromStorage() {
-	var msg kafka.Message
+func (w *BridgeWorker) populateCacheFromStorage() {
+	var errorsCount int
 
+	log.Debug("Papulating cache from storage")
 	for {
+		if errorsCount >= w.config.StorageMaxErrors {
+			log.WithField("errors_count", errorsCount).
+				Error("Got several errors in a row while reading from storage, stoppong reading")
+			break
+		}
+
 		operation := stats.MetricOperation{"storage", "get", stats.MetricEmptyPlaceholder}
 		storageMsg, err := w.storage.Get()
 		if err != nil {
@@ -133,12 +141,15 @@ func (w *BridgeWorker) populatePoolFromStorage() {
 			}
 			log.WithError(err).Error("Failed to read message from persistent storage")
 			w.statsClient.TrackOperation(statsWorkerSection, operation, nil, false)
+			errorsCount++
 			continue
 		}
 		w.statsClient.TrackOperation(statsWorkerSection, operation, nil, true)
+		errorsCount = 0
 
 		operation = stats.MetricOperation{"storage", "unmarshal", stats.MetricEmptyPlaceholder}
-		err = json.Unmarshal(storageMsg, msg)
+		var msg *producer.Message
+		err = json.Unmarshal(storageMsg, &msg)
 		if err != nil {
 			log.WithError(err).Error("Failed to unmarshal message from persistent storage")
 			w.statsClient.TrackOperation(statsWorkerSection, operation, nil, false)
@@ -146,11 +157,11 @@ func (w *BridgeWorker) populatePoolFromStorage() {
 		}
 		w.statsClient.TrackOperation(statsWorkerSection, operation, nil, true)
 
-		w.cacheMessage(&msg)
+		w.cacheMessage(msg)
 	}
 }
 
-func (w *BridgeWorker) publishMessages(messages []*kafka.Message) {
+func (w *BridgeWorker) publishMessages(messages []*producer.Message) {
 	for _, msg := range messages {
 		err := w.producer.Publish(*msg)
 		if err != nil {
@@ -171,7 +182,7 @@ func (w *BridgeWorker) publishMessages(messages []*kafka.Message) {
 	}
 }
 
-func (w *BridgeWorker) storeMessage(msg *kafka.Message) error {
+func (w *BridgeWorker) storeMessage(msg *producer.Message) error {
 	data, err := json.Marshal(msg)
 
 	operation := stats.MetricOperation{"storage", "marshal", stats.MetricEmptyPlaceholder}

@@ -12,5 +12,5 @@ mkdir -p docker-images/ci/assets
 tar -C docker-images/dist -zxf release-candidate/kandalf_linux-amd64.tar.gz
 
 # Copies code to the image directories
-cp source-code/ci/assets/* docker-images/ci/assets
+cp source-code/ci/assets/*.yml docker-images/ci/assets
 cp source-code/Dockerfile docker-images/Dockerfile

@@ -1,6 +1,7 @@
 package config
 
 import (
+	"fmt"
 	"os"
 	"path/filepath"
 	"testing"
@@ -18,39 +19,6 @@ func assertPipes(t *testing.T, pipes []Pipe) {
 	assert.Equal(t, "badge.received", pipes[1].RabbitRoutingKey)
 	assert.Equal(t, "loyalty", pipes[1].KafkaTopic)
 	assert.Equal(t, "kandalf-customers-badge.received", pipes[1].RabbitQueueName)
-}
-
-func TestLoadPipesFromData(t *testing.T) {
-	data := []byte(`
----
--
-  # Message from that RabbitMQ exchange
-  rabbitmq_exchange_name: "customers"
-  # With that routing key
-  rabbitmq_routing_key: "order.created"
-  # Will be placed to that kafka topic
-  kafka_topic: "new-orders"
-  # The queue name can be whatever you want, just keep it unique within pipes.
-  # If you launch multiple kandalf instances they all will consume messages from that queue.
-  rabbitmq_queue_name: "kandalf-customers-order.created"
-
--
-  kafka_topic: "loyalty"
-  rabbitmq_exchange_name: "customers"
-  rabbitmq_routing_key: "badge.received"
-  rabbitmq_queue_name: "kandalf-customers-badge.received"
-  `)
-	pipes, err := LoadPipesFromData(data)
-	assert.Nil(t, err)
-	assert.Len(t, pipes, 2)
-
-	assertPipes(t, pipes)
-}
-
-func TestLoadPipesFromData_Error(t *testing.T) {
-	data := []byte("this is not yaml")
-	_, err := LoadPipesFromData(data)
-	assert.NotEmpty(t, err)
 }
 
 func TestLoadPipesFromFile(t *testing.T) {
@@ -75,7 +43,7 @@ func TestLoadPipesFromFile_Error(t *testing.T) {
 	assert.Nil(t, err)
 	assert.Contains(t, wd, "github.com/hellofresh/kandalf")
 
-	// non-yaml file
+	// non-supported file type
 	// .../github.com/hellofresh/kandalf/pkg/config/pipes.go
 	pipesPath := filepath.Join(wd, "pipes.go")
 	_, err = os.Stat(pipesPath)
@@ -92,4 +60,17 @@ func TestLoadPipesFromFile_Error(t *testing.T) {
 
 	_, err = LoadPipesFromFile(pipesPath)
 	assert.NotEmpty(t, err)
+}
+
+func TestPipe_String(t *testing.T) {
+	pipe := Pipe{
+		KafkaTopic:         "topic",
+		RabbitExchangeName: "rqExchange",
+		RabbitRoutingKey:   "rqKey",
+		RabbitQueueName:    "rqQueue",
+	}
+	pipeJSON := `{"KafkaTopic":"topic","RabbitExchangeName":"rqExchange","RabbitRoutingKey":"rqKey","RabbitQueueName":"rqQueue"}`
+
+	assert.Equal(t, pipeJSON, pipe.String())
+	assert.Equal(t, pipeJSON, fmt.Sprintf("%s", pipe))
 }

@@ -78,7 +78,7 @@ groups:
   jobs:
   - run-unit-tests
   - create-release-candidate
-  - staging-deployment
+  #- staging-deployment
   - docker-deployment
 
 - name: live
@@ -143,59 +143,6 @@ jobs:
     params:
       pre: 'rc'
 
-# Create Release
-#-----------------------------------------------------------------------------------------------------------------------
-- name: create-release
-  serial: true
-  plan:
-
-  # Get the latest release candidate
-  - get: release-candidate
-
-  # Bump the version of the release
-  - put: version
-    params:
-      bump: final
-
-  # Upload a release to Github
-  - put: release
-    params:
-      name: version/version
-      tag: version/version
-      globs:
-      - release-candidate/*.tar.gz
-      - release-candidate/*.deb
-
-# Docker Deployments
-#-----------------------------------------------------------------------------------------------------------------------
-- name: docker-deployment
-  public: false
-  serial: true
-  plan:
-
-  # Trigger after a release candidate has been created
-  - get: release-candidate
-    trigger: true
-    passed: [create-release-candidate]
-    globs:
-    - release-candidate/*.tar.gz
-
-  # Get the application source for the scripts
-  - get: source-code
-
-  - task: prepare-docker-images
-    file: source-code/ci/tasks/docker-deployment.yml
-
-  # Get the application version to use it in docker
-  - get: version
-
-  # Upload the image to quay.io
-  - put: docker-image
-    params:
-      build: docker-images
-      tag_as_latest: true
-      tag: version/version
-
 # Staging Deployments
 #-----------------------------------------------------------------------------------------------------------------------
 - name: staging-deployment
@@ -236,6 +183,59 @@ jobs:
       params:
         channel: {{slack_channel}}
         text: {{slack_staging_success_text}}
+
+# Docker Deployments
+#-----------------------------------------------------------------------------------------------------------------------
+- name: docker-deployment
+  public: false
+  serial: true
+  plan:
+
+  # Trigger after a release candidate has been created
+  - get: release-candidate
+    trigger: true
+    passed: [create-release-candidate]
+    globs:
+    - release-candidate/*.tar.gz
+
+  # Get the application source for the scripts
+  - get: source-code
+
+  - task: prepare-docker-images
+    file: source-code/ci/tasks/docker-deployment.yml
+
+  # Get the application version to use it in docker
+  - get: version
+
+  # Upload the image to quay.io
+  - put: docker-image
+    params:
+      build: docker-images
+      tag_as_latest: true
+      tag: version/version
+
+# Create Release
+#-----------------------------------------------------------------------------------------------------------------------
+- name: create-release
+  serial: true
+  plan:
+
+  # Get the latest release candidate
+  - get: release-candidate
+
+  # Bump the version of the release
+  - put: version
+    params:
+      bump: final
+
+  # Upload a release to Github
+  - put: release
+    params:
+      name: version/version
+      tag: version/version
+      globs:
+      - release-candidate/*.tar.gz
+      - release-candidate/*.deb
 
 # Live Deployments
 #-----------------------------------------------------------------------------------------------------------------------

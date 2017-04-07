@@ -39,7 +39,7 @@ func NewQueuesHandler(pipes []config.Pipe, handler MessageHandler, statsClient s
 			}
 
 			operation = stats.MetricOperation{statsOpConnect, "queue", pipe.RabbitQueueName}
-			queue, err := channel.QueueDeclare(pipe.RabbitQueueName, false, true, false, true, nil)
+			queue, err := channel.QueueDeclare(pipe.RabbitQueueName, pipe.RabbitDurableQueue, pipe.RabbitAutoDeleteQueue, false, true, nil)
 			statsClient.TrackOperation(statsAMQPSection, operation, nil, nil == err)
 			if err != nil {
 				log.WithError(err).Error("Failed to declare queue")

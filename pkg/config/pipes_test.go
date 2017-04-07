@@ -14,11 +14,15 @@ func assertPipes(t *testing.T, pipes []Pipe) {
 	assert.Equal(t, "order.created", pipes[0].RabbitRoutingKey)
 	assert.Equal(t, "new-orders", pipes[0].KafkaTopic)
 	assert.Equal(t, "kandalf-customers-order.created", pipes[0].RabbitQueueName)
+	assert.Equal(t, true, pipes[0].RabbitDurableQueue)
+	assert.Equal(t, false, pipes[0].RabbitAutoDeleteQueue)
 
 	assert.Equal(t, "customers", pipes[1].RabbitExchangeName)
 	assert.Equal(t, "badge.received", pipes[1].RabbitRoutingKey)
 	assert.Equal(t, "loyalty", pipes[1].KafkaTopic)
 	assert.Equal(t, "kandalf-customers-badge.received", pipes[1].RabbitQueueName)
+	assert.Equal(t, false, pipes[1].RabbitDurableQueue)
+	assert.Equal(t, true, pipes[1].RabbitAutoDeleteQueue)
 }
 
 func TestLoadPipesFromFile(t *testing.T) {
@@ -64,12 +68,14 @@ func TestLoadPipesFromFile_Error(t *testing.T) {
 
 func TestPipe_String(t *testing.T) {
 	pipe := Pipe{
-		KafkaTopic:         "topic",
-		RabbitExchangeName: "rqExchange",
-		RabbitRoutingKey:   "rqKey",
-		RabbitQueueName:    "rqQueue",
+		KafkaTopic:            "topic",
+		RabbitExchangeName:    "rqExchange",
+		RabbitRoutingKey:      "rqKey",
+		RabbitQueueName:       "rqQueue",
+		RabbitDurableQueue:    true,
+		RabbitAutoDeleteQueue: false,
 	}
-	pipeJSON := `{"KafkaTopic":"topic","RabbitExchangeName":"rqExchange","RabbitRoutingKey":"rqKey","RabbitQueueName":"rqQueue"}`
+	pipeJSON := `{"KafkaTopic":"topic","RabbitExchangeName":"rqExchange","RabbitRoutingKey":"rqKey","RabbitQueueName":"rqQueue","RabbitDurableQueue":true,"RabbitAutoDeleteQueue":false}`
 
 	assert.Equal(t, pipeJSON, pipe.String())
 	assert.Equal(t, pipeJSON, fmt.Sprintf("%s", pipe))

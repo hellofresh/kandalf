@@ -75,6 +75,8 @@ The rules, defining which messages should be send to which Kafka topics, are def
   rabbitExchangeName: "customers"                      # name of the exchange in RabbitMQ
   rabbitRoutingKey: "badge.received"                   # routing key for exchange
   rabbitQueueName: "kandalf-customers-badge.received"  # the name of RabbitMQ queue to read messages from
+  rabbitDurableQueue: true                             # determines if the queue should be declared as durable
+  rabbitAutoDeleteQueue: false                         # determines if the queue should be declared as auto-delete
 ```
 
 You can find sample Kafka Pipes Config file in [ci/assets/pipes.yml](./ci/assets/pipes.yml).

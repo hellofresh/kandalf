@@ -6,6 +6,11 @@
 
 # Kandalf
 
+[![Build Status](https://travis-ci.org/hellofresh/kandalf.svg?branch=master)](https://travis-ci.org/hellofresh/kandalf)
+[![Coverage Status](https://coveralls.io/repos/github/hellofresh/kandalf/badge.svg?branch=master)](https://coveralls.io/github/hellofresh/kandalf?branch=master)
+[![GoDoc](https://godoc.org/github.com/hellofresh/kandalf?status.svg)](https://godoc.org/github.com/hellofresh/kandalf)
+[![Go Report Card](https://goreportcard.com/badge/github.com/hellofresh/kandalf)](https://goreportcard.com/report/github.com/hellofresh/kandalf)
+
 > RabbitMQ to Kafka bridge
 
 The main idea is to read messages from provided exchanges in [RabbitMQ](https://www.rabbitmq.com/) and send them to [Kafka](http://kafka.apache.org/).
@@ -75,6 +80,8 @@ The rules, defining which messages should be send to which Kafka topics, are def
   rabbitExchangeName: "customers"                      # name of the exchange in RabbitMQ
   rabbitRoutingKey: "badge.received"                   # routing key for exchange
   rabbitQueueName: "kandalf-customers-badge.received"  # the name of RabbitMQ queue to read messages from
+  rabbitDurableQueue: true                             # determines if the queue should be declared as durable
+  rabbitAutoDeleteQueue: false                         # determines if the queue should be declared as auto-delete
 ```
 
 You can find sample Kafka Pipes Config file in [ci/assets/pipes.yml](./ci/assets/pipes.yml).

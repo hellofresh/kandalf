@@ -7,10 +7,12 @@ import (
 
 // Pipe contains settings for single bridge pipe between Kafka and RabbitMQ
 type Pipe struct {
-	KafkaTopic         string
-	RabbitExchangeName string
-	RabbitRoutingKey   string
-	RabbitQueueName    string
+	KafkaTopic            string
+	RabbitExchangeName    string
+	RabbitRoutingKey      string
+	RabbitQueueName       string
+	RabbitDurableQueue    bool
+	RabbitAutoDeleteQueue bool
 }
 
 func (p Pipe) String() string {

@@ -30,7 +30,7 @@ type BridgeWorker struct {
 	config      config.WorkerConfig
 	storage     storage.PersistentStorage
 	producer    producer.Producer
-	statsClient stats.StatsClient
+	statsClient stats.Client
 
 	cache             []*producer.Message
 	lastFlush         time.Time
@@ -38,7 +38,7 @@ type BridgeWorker struct {
 }
 
 // NewBridgeWorker creates instance of BridgeWorker
-func NewBridgeWorker(config config.WorkerConfig, storage storage.PersistentStorage, producer producer.Producer, statsClient stats.StatsClient) (*BridgeWorker, error) {
+func NewBridgeWorker(config config.WorkerConfig, storage storage.PersistentStorage, producer producer.Producer, statsClient stats.Client) (*BridgeWorker, error) {
 	return &BridgeWorker{config: config, storage: storage, producer: producer, statsClient: statsClient}, nil
 }
 

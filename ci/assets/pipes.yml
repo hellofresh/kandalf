@@ -7,8 +7,12 @@ pipes:
   kafkaTopic: "new-orders"
   # The queue name can be whatever you want, just keep it unique within pipes.
   rabbitQueueName: "kandalf-customers-order.created"
+  rabbitDurableQueue: true
+  rabbitAutoDeleteQueue: false
 
 - kafkaTopic: "loyalty"
   rabbitExchangeName: "customers"
   rabbitRoutingKey: "badge.received"
   rabbitQueueName: "kandalf-customers-badge.received"
+  rabbitDurableQueue: false
+  rabbitAutoDeleteQueue: true

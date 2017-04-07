@@ -118,7 +118,9 @@ jobs:
     trigger: true
     passed: [run-unit-tests]
 
-  - get: version
+  - put: version
+    params:
+      pre: 'rc'
 
   # Create the rc artifact
   - task: create-artifact
@@ -137,11 +139,6 @@ jobs:
       globs:
       - artifacts/*.tar.gz
       - packages/*.deb
-
-  # Bump the rc version
-  - put: version
-    params:
-      pre: 'rc'
 
 # Staging Deployments
 #-----------------------------------------------------------------------------------------------------------------------

@@ -19,7 +19,7 @@ const (
 type MessageHandler func(body []byte, pipe config.Pipe) error
 
 // NewQueuesHandler instantiates queues initialisation handler
-func NewQueuesHandler(pipes []config.Pipe, handler MessageHandler, statsClient stats.StatsClient) InitQueuesHandler {
+func NewQueuesHandler(pipes []config.Pipe, handler MessageHandler, statsClient stats.Client) InitQueuesHandler {
 	return func(conn *amqp.Connection) error {
 		operation := stats.MetricOperation{statsOpConnect, "channel", stats.MetricEmptyPlaceholder}
 		channel, err := conn.Channel()
@@ -39,7 +39,7 @@ func NewQueuesHandler(pipes []config.Pipe, handler MessageHandler, statsClient s
 			}
 
 			operation = stats.MetricOperation{statsOpConnect, "queue", pipe.RabbitQueueName}
-			queue, err := channel.QueueDeclare(pipe.RabbitQueueName, false, true, false, true, nil)
+			queue, err := channel.QueueDeclare(pipe.RabbitQueueName, pipe.RabbitDurableQueue, pipe.RabbitAutoDeleteQueue, false, true, nil)
 			statsClient.TrackOperation(statsAMQPSection, operation, nil, nil == err)
 			if err != nil {
 				log.WithError(err).Error("Failed to declare queue")
@@ -69,7 +69,7 @@ func NewQueuesHandler(pipes []config.Pipe, handler MessageHandler, statsClient s
 	}
 }
 
-func consumeMessages(messages <-chan amqp.Delivery, pipe config.Pipe, handler MessageHandler, statsClient stats.StatsClient) {
+func consumeMessages(messages <-chan amqp.Delivery, pipe config.Pipe, handler MessageHandler, statsClient stats.Client) {
 	for msg := range messages {
 		err := handler(msg.Body, pipe)
 

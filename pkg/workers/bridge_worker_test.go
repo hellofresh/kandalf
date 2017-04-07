@@ -3,6 +3,7 @@ package workers
 import (
 	"encoding/json"
 	"errors"
+	"fmt"
 	"testing"
 	"time"
 
@@ -87,7 +88,7 @@ func generateRandomMessages(n int) []*producer.Message {
 
 func TestBridgeWorker_MessageHandler(t *testing.T) {
 	workerConfig := config.WorkerConfig{}
-	statsClient := stats.NewStatsdStatsClient("", "")
+	statsClient, _ := stats.NewClient("memory://", "")
 	mockStorage := &mockStorage{}
 	mockProducer := &mockProducer{}
 
@@ -99,17 +100,26 @@ func TestBridgeWorker_MessageHandler(t *testing.T) {
 		worker.MessageHandler(msg.Body, config.Pipe{KafkaTopic: msg.Topic})
 	}
 
+	memoryStats, _ := statsClient.(*stats.MemoryClient)
+	assert.Equal(t, messagesToPublish, memoryStats.CountMetrics[fmt.Sprintf("total.%s", statsWorkerSection)])
+	assert.Equal(t, messagesToPublish, memoryStats.CountMetrics[fmt.Sprintf("total.%s-ok", statsWorkerSection)])
+	assert.Equal(t, 0, memoryStats.CountMetrics[fmt.Sprintf("total.%s-fail", statsWorkerSection)])
+
 	assert.Equal(t, messagesToPublish, len(worker.cache))
 	for i, msg := range messages {
 		assert.Equal(t, msg.Topic, worker.cache[i].Topic)
 		assert.Equal(t, msg.Body, worker.cache[i].Body)
 		assert.NotEqual(t, msg.ID.String(), worker.cache[i].ID.String())
+
+		assert.Equal(t, 1, memoryStats.CountMetrics[fmt.Sprintf("%s.cache.add.%s", statsWorkerSection, msg.Topic)])
+		assert.Equal(t, 1, memoryStats.CountMetrics[fmt.Sprintf("%s-ok.cache.add.%s", statsWorkerSection, msg.Topic)])
+		assert.Equal(t, 0, memoryStats.CountMetrics[fmt.Sprintf("%s-fail.cache.add.%s", statsWorkerSection, msg.Topic)])
 	}
 }
 
 func TestBridgeWorker_cacheMessage(t *testing.T) {
 	workerConfig := config.WorkerConfig{}
-	statsClient := stats.NewStatsdStatsClient("", "")
+	statsClient, _ := stats.NewClient("memory://", "")
 	mockStorage := &mockStorage{}
 	mockProducer := &mockProducer{}
 
@@ -123,6 +133,17 @@ func TestBridgeWorker_cacheMessage(t *testing.T) {
 
 	assert.Equal(t, messagesToPublish, len(worker.cache))
 	assert.Equal(t, messages, worker.cache)
+
+	memoryStats, _ := statsClient.(*stats.MemoryClient)
+	assert.Equal(t, messagesToPublish, memoryStats.CountMetrics[fmt.Sprintf("total.%s", statsWorkerSection)])
+	assert.Equal(t, messagesToPublish, memoryStats.CountMetrics[fmt.Sprintf("total.%s-ok", statsWorkerSection)])
+	assert.Equal(t, 0, memoryStats.CountMetrics[fmt.Sprintf("total.%s-fail", statsWorkerSection)])
+
+	for _, msg := range messages {
+		assert.Equal(t, 1, memoryStats.CountMetrics[fmt.Sprintf("%s.cache.add.%s", statsWorkerSection, msg.Topic)])
+		assert.Equal(t, 1, memoryStats.CountMetrics[fmt.Sprintf("%s-ok.cache.add.%s", statsWorkerSection, msg.Topic)])
+		assert.Equal(t, 0, memoryStats.CountMetrics[fmt.Sprintf("%s-fail.cache.add.%s", statsWorkerSection, msg.Topic)])
+	}
 }
 
 func getDefaultBridgeWorker(t *testing.T) *BridgeWorker {
@@ -133,7 +154,7 @@ func getDefaultBridgeWorker(t *testing.T) *BridgeWorker {
 		CacheFlushTimeout:  time.Duration(1) * time.Hour,
 		StorageReadTimeout: time.Duration(1) * time.Hour,
 	}
-	statsClient := stats.NewStatsdStatsClient("", "")
+	statsClient, _ := stats.NewClient("memory://", "")
 	mockStorage := &mockStorage{t: t}
 	mockProducer := &mockProducer{t: t}
 
@@ -319,7 +340,7 @@ func TestBridgeWorker_Close(t *testing.T) {
 	assert.Equal(t, 0, len(mockStorage.putData))
 
 	err := worker.Close()
-	assert.NotEmpty(t, err)
+	assert.Error(t, err)
 	assert.Equal(t, errStorageClose, err)
 	assert.Equal(t, messagesCount, mockStorage.putCalled)
 	assert.Equal(t, messagesCount, len(mockStorage.putData))
@@ -339,22 +360,22 @@ func TestBridgeWorker_storeMessage_errors(t *testing.T) {
 	// I tried to make a json marshal error here, but no luck, it works
 	msg1 := producer.NewMessage([]byte("Z̮̞̠͙͔ͅḀ̗̞͈̻̗Ḷ͙͎̯̹̞͓G̻O̭̗̮"), "🇺🇸🇷🇺🇸 🇦🇫🇦🇲🇸")
 	err := worker.storeMessage(msg1)
-	assert.Nil(t, err)
+	assert.NoError(t, err)
 
 	msg2 := producer.NewMessage([]byte(uuid.NewV4().String()), uuid.NewV4().String())
 	err = worker.storeMessage(msg2)
-	assert.NotEmpty(t, err)
+	assert.Error(t, err)
 	assert.Equal(t, errPutToStorage, err)
 
 	assert.Equal(t, 2, len(mockStorage.putData))
 
 	var msg1Json *producer.Message
 	err = json.Unmarshal(mockStorage.putData[0], &msg1Json)
-	assert.Nil(t, err)
+	assert.NoError(t, err)
 	assert.Equal(t, msg1, msg1Json)
 
 	var msg2Json *producer.Message
 	err = json.Unmarshal(mockStorage.putData[1], &msg2Json)
-	assert.Nil(t, err)
+	assert.NoError(t, err)
 	assert.Equal(t, msg2, msg2Json)
 }

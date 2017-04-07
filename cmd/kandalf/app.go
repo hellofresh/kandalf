@@ -35,7 +35,8 @@ func RunApp(cmd *cobra.Command, args []string) {
 	pipesList, err := config.LoadPipesFromFile(globalConfig.Kafka.PipesConfig)
 	failOnError(err, "Failed to load pipes config")
 
-	statsClient := stats.NewStatsdStatsClient(globalConfig.Stats.DSN, globalConfig.Stats.Prefix)
+	statsClient, err := stats.NewClient(globalConfig.Stats.DSN, globalConfig.Stats.Prefix)
+	failOnError(err, "Failed to connect to stats service")
 	defer func() {
 		if err := statsClient.Close(); err != nil {
 			log.WithError(err).Error("Got error on closing stats client")

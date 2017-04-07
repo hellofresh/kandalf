@@ -14,11 +14,11 @@ const (
 // KafkaProducer is a Producer implementation for publishing messages to Kafka
 type KafkaProducer struct {
 	kafkaClient sarama.SyncProducer
-	statsClient stats.StatsClient
+	statsClient stats.Client
 }
 
 // NewKafkaProducer instantiates and establishes new Kafka connection
-func NewKafkaProducer(kafkaConfig config.KafkaConfig, statsClient stats.StatsClient) (Producer, error) {
+func NewKafkaProducer(kafkaConfig config.KafkaConfig, statsClient stats.Client) (Producer, error) {
 	cnf := sarama.NewConfig()
 	cnf.Producer.RequiredAcks = sarama.WaitForAll
 	cnf.Producer.Retry.Max = kafkaConfig.MaxRetry
@@ -50,7 +50,7 @@ func (p *KafkaProducer) Publish(msg Message) error {
 	} else {
 		log.WithError(err).WithField("msg", msg.String()).Error("Failed to publish message to kafka")
 	}
-	operation := stats.MetricOperation{"publish", msg.Topic, stats.MetricEmptyPlaceholder}
+	operation := stats.MetricOperation{"publish", msg.Topic}
 	p.statsClient.TrackOperation(statsKafkaSection, operation, nil, err == nil)
 
 	return err

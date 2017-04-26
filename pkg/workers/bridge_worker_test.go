@@ -308,7 +308,7 @@ func TestBridgeWorker_populateCacheFromStorage_maxErrors(t *testing.T) {
 	mockStorage.getResult = append(mockStorage.getResult, mockGetResult{[]byte("i no json"), nil})
 	// second normal message
 	mockStorage.getResult = append(mockStorage.getResult, mockGetResult{jsonData2, nil})
-	// problems with storage two times, so it should break teh cycle
+	// problems with storage two times, so it should break the cycle
 	mockStorage.getResult = append(mockStorage.getResult, mockGetResult{nil, errors.New("Some problems")})
 	mockStorage.getResult = append(mockStorage.getResult, mockGetResult{nil, errors.New("Some problems")})
 	// third normal message, this should never be processed

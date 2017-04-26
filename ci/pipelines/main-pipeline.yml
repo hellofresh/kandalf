@@ -78,7 +78,7 @@ groups:
   jobs:
   - run-unit-tests
   - create-release-candidate
-  #- staging-deployment
+  - staging-deployment
   - docker-deployment
 
 - name: live
@@ -167,14 +167,14 @@ jobs:
       GROUP_NAME: {{automation_group_name}}
       VPASS: {{automation_vpass}}
 
-    # Notify the slack channel of deployment success
+    # Notify the slack channel of deployment failure
     on_failure:
       put: slack-alert
       params:
         channel: {{slack_channel}}
         text: {{slack_staging_failure_text}}
 
-    # Notify the slack channel of deployment failure
+    # Notify the slack channel of deployment success
     on_success:
       put: slack-alert
       params:
@@ -263,14 +263,14 @@ jobs:
       GROUP_NAME: {{automation_group_name}}
       VPASS: {{automation_vpass}}
 
-    # Notify the slack channel of deployment success
+    # Notify the slack channel of deployment failure
     on_failure:
       put: slack-alert
       params:
         channel: {{slack_channel}}
         text: {{slack_live_failure_text}}
 
-    # Notify the slack channel of deployment failure
+    # Notify the slack channel of deployment success
     on_success:
       put: slack-alert
       params:

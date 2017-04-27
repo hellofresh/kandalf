@@ -34,8 +34,8 @@ func TestLoad(t *testing.T) {
 	assert.Nil(t, err)
 	assert.Contains(t, wd, "github.com/hellofresh/kandalf")
 
-	// .../github.com/hellofresh/kandalf/pkg/config/../../ci/assets/config.yml
-	globalConfigPath := filepath.Join(wd, "..", "..", "ci", "assets", "config.yml")
+	// .../github.com/hellofresh/kandalf/pkg/config/../../assets/config.yml
+	globalConfigPath := filepath.Join(wd, "..", "..", "assets", "config.yml")
 	_, err = os.Stat(globalConfigPath)
 	assert.Nil(t, err)
 

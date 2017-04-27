@@ -69,7 +69,7 @@ worker:
   storageMaxErrors: 10                              # same as env WORKER_STORAGE_MAX_ERRORS
 ```
 
-You can find sample config file in [ci/assets/config.yml](./ci/assets/config.yml).
+You can find sample config file in [assets/config.yml](./assets/config.yml).
 
 ### Pipes configuration
 
@@ -84,7 +84,7 @@ The rules, defining which messages should be send to which Kafka topics, are def
   rabbitAutoDeleteQueue: false                         # determines if the queue should be declared as auto-delete
 ```
 
-You can find sample Kafka Pipes Config file in [ci/assets/pipes.yml](./ci/assets/pipes.yml).
+You can find sample Kafka Pipes Config file in [assets/pipes.yml](./assets/pipes.yml).
 
 ## How to build a binary on a local machine
 

@@ -30,8 +30,8 @@ func TestLoadPipesFromFile(t *testing.T) {
 	assert.Nil(t, err)
 	assert.Contains(t, wd, "github.com/hellofresh/kandalf")
 
-	// .../github.com/hellofresh/kandalf/pkg/config/../../ci/assets/pipes.yml
-	pipesPath := filepath.Join(wd, "..", "..", "ci", "assets", "pipes.yml")
+	// .../github.com/hellofresh/kandalf/pkg/config/../../assets/pipes.yml
+	pipesPath := filepath.Join(wd, "..", "..", "assets", "pipes.yml")
 	_, err = os.Stat(pipesPath)
 	assert.Nil(t, err)
 

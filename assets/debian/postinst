@@ -1,0 +1,43 @@
+#!/bin/sh
+set -e
+
+USER="kandalf"
+LOGS_DIR="/var/log/kandalf"
+
+case "$1" in
+  configure)
+    getent passwd ${USER} >/dev/null 2>&1 || adduser --system --disabled-login --no-create-home --gecos "RabbitMQ to kafka bridge" --group ${USER}
+
+    mkdir -p ${LOGS_DIR}
+    chown ${USER}:${USER} ${LOGS_DIR}
+
+    if [ -x /bin/systemctl ]; then
+      systemctl enable kandalf.service >/dev/null 2>&1 || true
+    fi
+
+    ps aux | grep kandalf | grep -v grep >/dev/null 2>&1
+    if [ $? -eq 0 ]; then
+      if [ -x /bin/systemctl ]; then
+        systemctl restart kandalf.service
+      else
+        service kandalf restart
+      fi
+    fi
+    ;;
+
+  abort-upgrade|abort-remove|abort-deconfigure)
+    ;;
+
+  *)
+    echo "postinst called with unknown argument \`$1'" >&2
+    exit 1
+    ;;
+esac
+
+if [ -x "/etc/init.d/kandalf" ] || [ -e "/etc/kandalf/conf/config.yml" ]; then
+  if [ ! -e "/etc/init/kandalf.conf" ]; then
+    update-rc.d kandalf defaults
+  fi
+fi
+
+exit 0

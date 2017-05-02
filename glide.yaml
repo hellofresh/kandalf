@@ -4,12 +4,13 @@ import:
   version: ^1.11.0
 - package: github.com/Sirupsen/logrus
   version: ^0.11.5
+- package: github.com/bshuster-repo/logrus-logstash-hook
 - package: github.com/garyburd/redigo
   version: ^1.0.0
   subpackages:
   - redis
 - package: github.com/hellofresh/stats-go
-  version: ^0.2.0
+  version: ^0.2.1
 - package: github.com/kelseyhightower/envconfig
   version: ^1.3.0
 - package: github.com/satori/go.uuid

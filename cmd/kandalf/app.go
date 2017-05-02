@@ -16,13 +16,6 @@ import (
 
 // RunApp is main application bootstrap and runner
 func RunApp(cmd *cobra.Command, args []string) {
-	printVersion, err := cmd.Flags().GetBool(flagVersion)
-	failOnError(err, "Failed to read version flag")
-	if printVersion {
-		cmd.Println(cmd.Short)
-		return
-	}
-
 	log.WithField("version", version).Info("Kandalf starting...")
 
 	globalConfig, err := config.Load(configPath)

@@ -3,14 +3,10 @@ package main
 import (
 	"fmt"
 	"os"
-	"time"
 
-	log "github.com/Sirupsen/logrus"
-	"github.com/bshuster-repo/logrus-logstash-hook"
+	log "github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 )
-
-const flagVersion = "version"
 
 var (
 	version     string
@@ -31,11 +27,6 @@ func main() {
 			fmt.Println(versionString)
 			os.Exit(0)
 		}
-
-		log.SetFormatter(&logrus_logstash.LogstashFormatter{
-			Type:            "Kandalf",
-			TimestampFormat: time.RFC3339Nano,
-		})
 	})
 
 	var RootCmd = &cobra.Command{

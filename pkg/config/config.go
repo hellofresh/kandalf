@@ -3,8 +3,9 @@ package config
 import (
 	"time"
 
-	log "github.com/Sirupsen/logrus"
+	"github.com/hellofresh/logging-go"
 	"github.com/kelseyhightower/envconfig"
+	log "github.com/sirupsen/logrus"
 	"github.com/spf13/viper"
 )
 
@@ -18,6 +19,8 @@ type GlobalConfig struct {
 	//  redis://redis.local/?key=storage:key
 	StorageDSN string `envconfig:"STORAGE_DSN"`
 
+	// Log contains configuration values for logging
+	Log logging.LogConfig
 	// Kafka contains configuration values for Kafka
 	Kafka KafkaConfig
 	// Stats contains configuration values for stats
@@ -77,7 +80,6 @@ type WorkerConfig struct {
 }
 
 func init() {
-	viper.SetDefault("logLevel", "info")
 	viper.SetDefault("kafka.maxRetry", 5)
 	viper.SetDefault("kafka.pipesConfig", "/etc/kandalf/conf/pipes.yml")
 	viper.SetDefault("worker.cycleTimeout", time.Second*time.Duration(2))
@@ -85,6 +87,8 @@ func init() {
 	viper.SetDefault("worker.cacheFlushTimeout", time.Second*time.Duration(5))
 	viper.SetDefault("worker.storageReadTimeout", time.Second*time.Duration(10))
 	viper.SetDefault("worker.storageMaxErrors", 10)
+
+	logging.InitDefaults(viper.GetViper(), "log")
 }
 
 // Load loads config values from file,

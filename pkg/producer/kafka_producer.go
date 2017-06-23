@@ -2,9 +2,10 @@ package producer
 
 import (
 	"github.com/Shopify/sarama"
-	log "github.com/Sirupsen/logrus"
 	"github.com/hellofresh/kandalf/pkg/config"
 	"github.com/hellofresh/stats-go"
+	"github.com/hellofresh/stats-go/bucket"
+	log "github.com/sirupsen/logrus"
 )
 
 const (
@@ -50,7 +51,7 @@ func (p *KafkaProducer) Publish(msg Message) error {
 	} else {
 		log.WithError(err).WithField("msg", msg.String()).Error("Failed to publish message to kafka")
 	}
-	operation := stats.MetricOperation{"publish", msg.Topic}
+	operation := bucket.MetricOperation{"publish", msg.Topic}
 	p.statsClient.TrackOperation(statsKafkaSection, operation, nil, err == nil)
 
 	return err

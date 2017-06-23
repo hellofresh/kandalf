@@ -7,6 +7,7 @@ import (
 
 	"github.com/Shopify/sarama"
 	"github.com/hellofresh/stats-go"
+	"github.com/hellofresh/stats-go/bucket"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -66,9 +67,9 @@ func TestKafkaProducer_Publish(t *testing.T) {
 	assert.NoError(t, err)
 
 	memoryStats, _ := statsClient.(*stats.MemoryClient)
-	assert.Equal(t, 1, memoryStats.CountMetrics[fmt.Sprintf("%s.publish.%s.-", statsKafkaSection, stats.SanitizeMetricName(topic))])
-	assert.Equal(t, 1, memoryStats.CountMetrics[fmt.Sprintf("%s-ok.publish.%s.-", statsKafkaSection, stats.SanitizeMetricName(topic))])
-	assert.Equal(t, 0, memoryStats.CountMetrics[fmt.Sprintf("%s-fail.publish.%s.-", statsKafkaSection, stats.SanitizeMetricName(topic))])
+	assert.Equal(t, 1, memoryStats.CountMetrics[fmt.Sprintf("%s.publish.%s.-", statsKafkaSection, bucket.SanitizeMetricName(topic))])
+	assert.Equal(t, 1, memoryStats.CountMetrics[fmt.Sprintf("%s-ok.publish.%s.-", statsKafkaSection, bucket.SanitizeMetricName(topic))])
+	assert.Equal(t, 0, memoryStats.CountMetrics[fmt.Sprintf("%s-fail.publish.%s.-", statsKafkaSection, bucket.SanitizeMetricName(topic))])
 
 	messageValue, err := mockProducer.lastSendMessageParams.Value.Encode()
 	assert.NoError(t, err)
@@ -94,7 +95,7 @@ func TestKafkaProducer_Publish_error(t *testing.T) {
 	assert.Equal(t, sendMessageError, err)
 
 	memoryStats, _ := statsClient.(*stats.MemoryClient)
-	assert.Equal(t, 1, memoryStats.CountMetrics[fmt.Sprintf("%s.publish.%s.-", statsKafkaSection, stats.SanitizeMetricName(topic))])
-	assert.Equal(t, 0, memoryStats.CountMetrics[fmt.Sprintf("%s-ok.publish.%s.-", statsKafkaSection, stats.SanitizeMetricName(topic))])
-	assert.Equal(t, 1, memoryStats.CountMetrics[fmt.Sprintf("%s-fail.publish.%s.-", statsKafkaSection, stats.SanitizeMetricName(topic))])
+	assert.Equal(t, 1, memoryStats.CountMetrics[fmt.Sprintf("%s.publish.%s.-", statsKafkaSection, bucket.SanitizeMetricName(topic))])
+	assert.Equal(t, 0, memoryStats.CountMetrics[fmt.Sprintf("%s-ok.publish.%s.-", statsKafkaSection, bucket.SanitizeMetricName(topic))])
+	assert.Equal(t, 1, memoryStats.CountMetrics[fmt.Sprintf("%s-fail.publish.%s.-", statsKafkaSection, bucket.SanitizeMetricName(topic))])
 }

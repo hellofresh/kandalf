@@ -2,9 +2,8 @@ package: github.com/hellofresh/kandalf
 import:
 - package: github.com/Shopify/sarama
   version: ^1.11.0
-- package: github.com/Sirupsen/logrus
-  version: ^0.11.5
-- package: github.com/bshuster-repo/logrus-logstash-hook
+- package: github.com/sirupsen/logrus
+  version: ^1.0.0
 - package: github.com/garyburd/redigo
   version: ^1.0.0
   subpackages:
@@ -18,6 +17,8 @@ import:
 - package: github.com/spf13/cobra
 - package: github.com/spf13/viper
 - package: github.com/streadway/amqp
+- package: github.com/hellofresh/logging-go
+  version: ^0.1.0
 testImport:
 - package: github.com/rafaeljusto/redigomock
   version: ^2.0.0

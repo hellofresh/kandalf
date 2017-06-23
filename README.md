@@ -29,7 +29,6 @@ By default it tries to read config file from `/etc/kandalf/conf/config.<ext>` an
 
 #### Environment variables
 
-* `LOG_LEVEL` - Logging verbosity level, see [logrus](https://github.com/Sirupsen/logrus#level-logging) for details (_default_: `info`)
 * `RABBIT_DSN` - RabbiMQ server DSN
 * `STORAGE_DSN` - Permanent storage DSN, where Scheme is storage type. The following storage types are currently supported:
   * [Redis](https://redis.io/) - requires, `key` as DSN query parameter as redis storage key, e.g. `redis://localhost:6379/?key=kandalf`
@@ -43,15 +42,19 @@ By default it tries to read config file from `/etc/kandalf/conf/config.<ext>` an
 * `WORKER_CACHE_FLUSH_TIMEOUT` - Max amount of time we store messages in memory before trying to publish to Kafka, must be valid [duration string](https://golang.org/pkg/time/#ParseDuration) (_default_: `5s`)
 * `WORKER_STORAGE_READ_TIMEOUT` - Timeout between attempts of reading persisted messages from storage, to publish them to Kafka, must be at least 2x greater than `WORKER_CYCLE_TIMEOUT`, must be valid [duration string](https://golang.org/pkg/time/#ParseDuration) (_default_: `10s`)
 * `WORKER_STORAGE_MAX_ERRORS` - Max storage read errors in a row before worker stops trying reading in current read cycle. Next read cycle will be in `WORKER_STORAGE_READ_TIMEOUT` interval. (_default_: `10`)
+* `LOG_*` - Logging settings, see [`github.com/hellofresh/logging-go`](https://github.com/hellofresh/logging-go#configuration) for details
 
 #### Config file (YAML example)
 
 Config should have the following structure:
 
-```yaml
-logLevel: "info"                                    # same as env LOG_LEVEL
+```yaml                                    
 rabbitDSN: "amqp://user:password@rmq"               # same as env RABBIT_DSN
 storageDSN: "redis://redis.local/?key=storage:key"  # same as env STORAGE_DSN
+log:                                                # same as env LOG_*
+  level: info
+  format: json
+  output: stderr
 kafka:
   brokers:                                          # same as env KAFKA_BROKERS
     - "192.0.0.1:9092"

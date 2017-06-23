@@ -9,7 +9,7 @@ import (
 )
 
 func assertConfig(t *testing.T, globalConfig *GlobalConfig) {
-	assert.Equal(t, "info", globalConfig.LogLevel)
+	assert.Equal(t, "info", globalConfig.Log.Level)
 	assert.Equal(t, "amqp://user:password@rmq", globalConfig.RabbitDSN)
 	assert.Equal(t, "redis://redis.local/?key=storage:key", globalConfig.StorageDSN)
 

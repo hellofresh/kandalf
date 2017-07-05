@@ -9,9 +9,10 @@ import (
 )
 
 func assertConfig(t *testing.T, globalConfig *GlobalConfig) {
-	assert.Equal(t, "info", globalConfig.LogLevel)
 	assert.Equal(t, "amqp://user:password@rmq", globalConfig.RabbitDSN)
 	assert.Equal(t, "redis://redis.local/?key=storage:key", globalConfig.StorageDSN)
+
+	assert.Equal(t, "info", globalConfig.Log.Level)
 
 	assert.Len(t, globalConfig.Kafka.Brokers, 2)
 	assert.Equal(t, "192.0.0.1:9092", globalConfig.Kafka.Brokers[0])

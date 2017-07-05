@@ -29,10 +29,10 @@ By default it tries to read config file from `/etc/kandalf/conf/config.<ext>` an
 
 #### Environment variables
 
-* `LOG_LEVEL` - Logging verbosity level, see [logrus](https://github.com/Sirupsen/logrus#level-logging) for details (_default_: `info`)
 * `RABBIT_DSN` - RabbiMQ server DSN
 * `STORAGE_DSN` - Permanent storage DSN, where Scheme is storage type. The following storage types are currently supported:
   * [Redis](https://redis.io/) - requires, `key` as DSN query parameter as redis storage key, e.g. `redis://localhost:6379/?key=kandalf`
+* `LOG_*` - Logging settings, see [hellofresh/logging-go](https://github.com/hellofresh/logging-go#configuration) for details
 * `KAFKA_BROKERS` - Kafka brokers comma-separated list, e.g. `192.168.0.1:9092,192.168.0.2:9092`
 * `KAFKA_MAX_RETRY` - Total number of times to retry sending a message to Kafka (_default_: `5`)
 * `KAFKA_PIPES_CONFIG` - Path to RabbitMQ-Kafka bridge mappings config, see details below (_default_: `/etc/kandalf/conf/pipes.yml`)

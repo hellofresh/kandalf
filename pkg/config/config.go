@@ -3,21 +3,22 @@ package config
 import (
 	"time"
 
-	log "github.com/Sirupsen/logrus"
+	"github.com/hellofresh/logging-go"
 	"github.com/kelseyhightower/envconfig"
+	log "github.com/sirupsen/logrus"
 	"github.com/spf13/viper"
 )
 
 // GlobalConfig contains application configuration values
 type GlobalConfig struct {
-	// LogLevel defines logging level for application, default is "info"
-	LogLevel string `envconfig:"LOG_LEVEL" default:"info"`
 	// RabbitDSN is DSN for RabbitMQ instance to consume messages from
 	RabbitDSN string `envconfig:"RABBIT_DSN"`
 	// StorageDSN is DSN for persistent storage used in case of Kafka unavailability. Example:
 	//  redis://redis.local/?key=storage:key
 	StorageDSN string `envconfig:"STORAGE_DSN"`
 
+	// Log contains configuration values logging
+	Log logging.LogConfig
 	// Kafka contains configuration values for Kafka
 	Kafka KafkaConfig
 	// Stats contains configuration values for stats
@@ -85,6 +86,8 @@ func init() {
 	viper.SetDefault("worker.cacheFlushTimeout", time.Second*time.Duration(5))
 	viper.SetDefault("worker.storageReadTimeout", time.Second*time.Duration(10))
 	viper.SetDefault("worker.storageMaxErrors", 10)
+
+	logging.InitDefaults(viper.GetViper(), "log")
 }
 
 // Load loads config values from file,

@@ -6,11 +6,12 @@ import (
 	"sync"
 	"time"
 
-	log "github.com/Sirupsen/logrus"
 	"github.com/hellofresh/kandalf/pkg/config"
 	"github.com/hellofresh/kandalf/pkg/producer"
 	"github.com/hellofresh/kandalf/pkg/storage"
 	"github.com/hellofresh/stats-go"
+	"github.com/hellofresh/stats-go/bucket"
+	log "github.com/sirupsen/logrus"
 )
 
 const (
@@ -116,7 +117,7 @@ func (w *BridgeWorker) cacheMessage(msg *producer.Message) error {
 
 	w.cache = append(w.cache, msg)
 
-	operation := stats.MetricOperation{"cache", "add", msg.Topic}
+	operation := bucket.MetricOperation{"cache", "add", msg.Topic}
 	w.statsClient.TrackOperation(statsWorkerSection, operation, nil, true)
 
 	return nil
@@ -125,15 +126,15 @@ func (w *BridgeWorker) cacheMessage(msg *producer.Message) error {
 func (w *BridgeWorker) populateCacheFromStorage() {
 	var errorsCount int
 
-	log.Debug("Papulating cache from storage")
+	log.Debug("Populating cache from storage")
 	for {
 		if errorsCount >= w.config.StorageMaxErrors {
 			log.WithField("errors_count", errorsCount).
-				Error("Got several errors in a row while reading from storage, stoppong reading")
+				Error("Got several errors in a row while reading from storage, stopping reading")
 			break
 		}
 
-		operation := stats.MetricOperation{"storage", "get", stats.MetricEmptyPlaceholder}
+		operation := bucket.MetricOperation{"storage", "get"}
 		storageMsg, err := w.storage.Get()
 		if err != nil {
 			if err == storage.ErrStorageIsEmpty {
@@ -147,7 +148,7 @@ func (w *BridgeWorker) populateCacheFromStorage() {
 		w.statsClient.TrackOperation(statsWorkerSection, operation, nil, true)
 		errorsCount = 0
 
-		operation = stats.MetricOperation{"storage", "unmarshal", stats.MetricEmptyPlaceholder}
+		operation = bucket.MetricOperation{"storage", "unmarshal"}
 		var msg *producer.Message
 		err = json.Unmarshal(storageMsg, &msg)
 		if err != nil {
@@ -185,7 +186,7 @@ func (w *BridgeWorker) publishMessages(messages []*producer.Message) {
 func (w *BridgeWorker) storeMessage(msg *producer.Message) error {
 	data, err := json.Marshal(msg)
 
-	operation := stats.MetricOperation{"storage", "marshal", stats.MetricEmptyPlaceholder}
+	operation := bucket.MetricOperation{"storage", "marshal"}
 	w.statsClient.TrackOperation(statsWorkerSection, operation, nil, err == nil)
 
 	if err != nil {
@@ -196,7 +197,7 @@ func (w *BridgeWorker) storeMessage(msg *producer.Message) error {
 
 	err = w.storage.Put(data)
 
-	operation = stats.MetricOperation{"storage", "set", stats.MetricEmptyPlaceholder}
+	operation = bucket.MetricOperation{"storage", "set"}
 	w.statsClient.TrackOperation(statsWorkerSection, operation, nil, err == nil)
 
 	if err != nil {

@@ -1,7 +1,9 @@
-# Available options are: "debug", "info", "warning", "error", "fatal" and "panic"
-logLevel: "info"
 rabbitDSN: "amqp://user:password@rmq"
 storageDSN: "redis://redis.local/?key=storage:key"
+log:
+  level: info
+  format: json
+  output: stderr
 kafka:
   brokers:
     - "192.0.0.1:9092"

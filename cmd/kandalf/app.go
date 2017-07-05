@@ -2,15 +2,14 @@ package main
 
 import (
 	"net/url"
-	"strings"
 
-	log "github.com/Sirupsen/logrus"
 	"github.com/hellofresh/kandalf/pkg/amqp"
 	"github.com/hellofresh/kandalf/pkg/config"
 	"github.com/hellofresh/kandalf/pkg/producer"
 	"github.com/hellofresh/kandalf/pkg/storage"
 	"github.com/hellofresh/kandalf/pkg/workers"
 	"github.com/hellofresh/stats-go"
+	log "github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 )
 
@@ -21,9 +20,9 @@ func RunApp(cmd *cobra.Command, args []string) {
 	globalConfig, err := config.Load(configPath)
 	failOnError(err, "Failed to load application configuration")
 
-	level, err := log.ParseLevel(strings.ToLower(globalConfig.LogLevel))
-	failOnError(err, "Failed to get log level")
-	log.SetLevel(level)
+	err = globalConfig.Log.Apply()
+	failOnError(err, "Failed to configure logger")
+	defer globalConfig.Log.Flush()
 
 	pipesList, err := config.LoadPipesFromFile(globalConfig.Kafka.PipesConfig)
 	failOnError(err, "Failed to load pipes config")

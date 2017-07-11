@@ -7,7 +7,7 @@
 # Kandalf
 
 [![Build Status](https://travis-ci.org/hellofresh/kandalf.svg?branch=master)](https://travis-ci.org/hellofresh/kandalf)
-[![Coverage Status](https://coveralls.io/repos/github/hellofresh/kandalf/badge.svg?branch=master)](https://coveralls.io/github/hellofresh/kandalf?branch=master)
+[![codecov](https://codecov.io/gh/hellofresh/kandalf/branch/master/graph/badge.svg)](https://codecov.io/gh/hellofresh/kandalf)
 [![GoDoc](https://godoc.org/github.com/hellofresh/kandalf?status.svg)](https://godoc.org/github.com/hellofresh/kandalf)
 [![Go Report Card](https://goreportcard.com/badge/github.com/hellofresh/kandalf)](https://goreportcard.com/report/github.com/hellofresh/kandalf)
 

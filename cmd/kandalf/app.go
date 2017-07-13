@@ -9,6 +9,7 @@ import (
 	"github.com/hellofresh/kandalf/pkg/storage"
 	"github.com/hellofresh/kandalf/pkg/workers"
 	"github.com/hellofresh/stats-go"
+	"github.com/hellofresh/stats-go/hooks"
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 )
@@ -24,9 +25,6 @@ func RunApp(cmd *cobra.Command, args []string) {
 	failOnError(err, "Failed to configure logger")
 	defer globalConfig.Log.Flush()
 
-	pipesList, err := config.LoadPipesFromFile(globalConfig.Kafka.PipesConfig)
-	failOnError(err, "Failed to load pipes config")
-
 	statsClient, err := stats.NewClient(globalConfig.Stats.DSN, globalConfig.Stats.Prefix)
 	failOnError(err, "Failed to connect to stats service")
 	defer func() {
@@ -34,6 +32,11 @@ func RunApp(cmd *cobra.Command, args []string) {
 			log.WithError(err).Error("Got error on closing stats client")
 		}
 	}()
+
+	log.AddHook(hooks.NewLogrusHook(statsClient, globalConfig.Stats.ErrorsSection))
+
+	pipesList, err := config.LoadPipesFromFile(globalConfig.Kafka.PipesConfig)
+	failOnError(err, "Failed to load pipes config")
 
 	storageURL, err := url.Parse(globalConfig.StorageDSN)
 	failOnError(err, "Failed to parse Storage DSN")

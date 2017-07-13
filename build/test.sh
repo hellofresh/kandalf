@@ -27,7 +27,7 @@ FAIL="${ERROR_COLOR}FAIL ${NO_COLOR}"
 TARGETS=$@
 
 echo "${OK_COLOR}Running tests: ${NO_COLOR}"
-go test -race ${TARGETS}
+go test -race -cover ${TARGETS}
 
 echo "${OK_COLOR}Formatting: ${NO_COLOR}"
 ERRS=$(find cmd pkg -type f -name \*.go | xargs gofmt -l 2>&1 || true)

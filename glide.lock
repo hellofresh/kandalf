@@ -1,5 +1,5 @@
 hash: e757725caea4adccd3cf5359b7bb7373b0eddc6322382f801f58a1cd163527f1
-updated: 2017-07-05T11:46:45.089919532+02:00
+updated: 2017-07-13T12:17:10.139202835+02:00
 imports:
 - name: github.com/bshuster-repo/logrus-logstash-hook
   version: 41029b88e98c8b459ff27040389b69a4db2a8d07
@@ -42,7 +42,7 @@ imports:
 - name: github.com/hellofresh/logging-go
   version: e0dad001fe00320c380f9338e746beb0f832dca8
 - name: github.com/hellofresh/stats-go
-  version: aeae428c686577aea5e7bbcab1bcab51b4fb3b78
+  version: 83a84ddeb556c898599e404ec82b01f995599927
   subpackages:
   - bucket
   - incrementer
@@ -65,7 +65,7 @@ imports:
   subpackages:
   - xxHash32
 - name: github.com/pkg/errors
-  version: c605e284fe17294bda444b34710735b29d1a9d90
+  version: 645ef00459ed84a119197bfb8d8205042c6df63d
 - name: github.com/rcrowley/go-metrics
   version: 1f30fe9094a513ce4c700b9a54458bbb0c96996c
 - name: github.com/satori/go.uuid
@@ -73,7 +73,7 @@ imports:
 - name: github.com/Shopify/sarama
   version: c01858abb625b73a3af51d0798e4ad42c8147093
 - name: github.com/sirupsen/logrus
-  version: 202f25545ea4cf9b191ff7f846df5d87c9382c2b
+  version: 7f976d3a76720c4c27af2ba716b85d2e0a7e38b1
   subpackages:
   - hooks/syslog
 - name: github.com/spf13/afero
@@ -91,7 +91,7 @@ imports:
 - name: github.com/spf13/viper
   version: c1de95864d73a5465492829d7cb2dd422b19ac96
 - name: github.com/streadway/amqp
-  version: 27859d32540aebd2e5befa52dc59ae8e6a0132b6
+  version: 2cbfe40c9341ad63ba23e53013b3ddc7989d801c
 - name: golang.org/x/sys
   version: 94b76065f2d2081d0fef24a6e67c571f51a6408a
   subpackages:

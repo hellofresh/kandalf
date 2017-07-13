@@ -55,10 +55,9 @@ type KafkaConfig struct {
 // StatsConfig contains application configuration values for stats.
 // For details - read docs for github.com/hellofresh/stats-go package
 type StatsConfig struct {
-	// DSN is stats service DSN
-	DSN string `envconfig:"STATS_DSN"`
-	// Prefix is stats prefix
-	Prefix string `envconfig:"STATS_PREFIX"`
+	DSN           string `envconfig:"STATS_DSN"`
+	Prefix        string `envconfig:"STATS_PREFIX"`
+	ErrorsSection string `envconfig:"STATS_ERRORS_SECTION"`
 }
 
 // WorkerConfig contains application configuration values for actual bridge worker
@@ -86,6 +85,8 @@ func init() {
 	viper.SetDefault("worker.cacheFlushTimeout", time.Second*time.Duration(5))
 	viper.SetDefault("worker.storageReadTimeout", time.Second*time.Duration(10))
 	viper.SetDefault("worker.storageMaxErrors", 10)
+	viper.SetDefault("stats.dsn", "log://")
+	viper.SetDefault("stats.errorsSection", "error-log")
 
 	logging.InitDefaults(viper.GetViper(), "log")
 }

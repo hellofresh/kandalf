@@ -1,9 +1,12 @@
 package amqp
 
 import (
+	"fmt"
+
 	"github.com/hellofresh/kandalf/pkg/config"
 	"github.com/hellofresh/stats-go"
 	"github.com/hellofresh/stats-go/bucket"
+	"github.com/satori/go.uuid"
 	log "github.com/sirupsen/logrus"
 	"github.com/streadway/amqp"
 )
@@ -56,7 +59,8 @@ func NewQueuesHandler(pipes []config.Pipe, handler MessageHandler, statsClient s
 			}
 
 			operation = bucket.MetricOperation{statsOpConnect, "consume", queue.Name}
-			ch, err := channel.Consume(queue.Name, queue.Name+"_consumer", false, false, false, false, nil)
+			consumerName := fmt.Sprintf("%s_consumer_%s", queue.Name, uuid.NewV4().String())
+			ch, err := channel.Consume(queue.Name, consumerName, false, false, false, false, nil)
 			statsClient.TrackOperation(statsAMQPSection, operation, nil, nil == err)
 			if err != nil {
 				log.WithError(err).Error("Failed to register a consumer")

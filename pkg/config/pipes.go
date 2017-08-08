@@ -2,6 +2,7 @@ package config
 
 import (
 	"encoding/json"
+
 	"github.com/spf13/viper"
 )
 
@@ -9,7 +10,7 @@ import (
 type Pipe struct {
 	KafkaTopic            string
 	RabbitExchangeName    string
-	RabbitRoutingKey      string
+	RabbitRoutingKey      []string
 	RabbitQueueName       string
 	RabbitDurableQueue    bool
 	RabbitAutoDeleteQueue bool

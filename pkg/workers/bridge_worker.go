@@ -81,7 +81,7 @@ func (w *BridgeWorker) Go(interrupt chan bool) {
 			}
 
 			// Prevent CPU overload
-			log.WithField("timeout", w.config.CycleTimeout).Debug("Bridge worker is going to sleep for a while")
+			log.WithField("timeout", w.config.CycleTimeout.String()).Debug("Bridge worker is going to sleep for a while")
 			time.Sleep(w.config.CycleTimeout)
 		}
 	}()

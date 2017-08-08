@@ -2,6 +2,8 @@ package main
 
 import (
 	"net/url"
+	"os"
+	"path/filepath"
 
 	"github.com/hellofresh/kandalf/pkg/amqp"
 	"github.com/hellofresh/kandalf/pkg/config"
@@ -9,6 +11,7 @@ import (
 	"github.com/hellofresh/kandalf/pkg/storage"
 	"github.com/hellofresh/kandalf/pkg/workers"
 	"github.com/hellofresh/stats-go"
+	"github.com/hellofresh/stats-go/bucket"
 	"github.com/hellofresh/stats-go/hooks"
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
@@ -25,15 +28,12 @@ func RunApp(cmd *cobra.Command, args []string) {
 	failOnError(err, "Failed to configure logger")
 	defer globalConfig.Log.Flush()
 
-	statsClient, err := stats.NewClient(globalConfig.Stats.DSN, globalConfig.Stats.Prefix)
-	failOnError(err, "Failed to connect to stats service")
+	statsClient := initStatsClient(globalConfig.Stats)
 	defer func() {
 		if err := statsClient.Close(); err != nil {
 			log.WithError(err).Error("Got error on closing stats client")
 		}
 	}()
-
-	log.AddHook(hooks.NewLogrusHook(statsClient, globalConfig.Stats.ErrorsSection))
 
 	pipesList, err := config.LoadPipesFromFile(globalConfig.Kafka.PipesConfig)
 	failOnError(err, "Failed to load pipes config")
@@ -75,4 +75,21 @@ func RunApp(cmd *cobra.Command, args []string) {
 
 	log.Infof("[*] Waiting for users. To exit press CTRL+C")
 	<-forever
+}
+
+func initStatsClient(config config.StatsConfig) stats.Client {
+	statsClient, err := stats.NewClient(config.DSN, config.Prefix)
+	failOnError(err, "Failed to init stats client!")
+
+	log.AddHook(hooks.NewLogrusHook(statsClient, config.ErrorsSection))
+
+	host, err := os.Hostname()
+	if nil != err {
+		host = "-unknown-"
+	}
+
+	_, appFile := filepath.Split(os.Args[0])
+	statsClient.TrackMetric("app", bucket.MetricOperation{"init", host, appFile})
+
+	return statsClient
 }

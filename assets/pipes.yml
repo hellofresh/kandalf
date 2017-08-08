@@ -16,3 +16,13 @@ pipes:
   rabbitQueueName: "kandalf-customers-badge.received"
   rabbitDurableQueue: false
   rabbitAutoDeleteQueue: true
+
+- kafkaTopic: "topic_for_several_events"
+  rabbitExchangeName: "users"
+  rabbitRoutingKey:
+  - "user.de.registered"
+  - "user.at.registered"
+  - "user.ch.registered"
+  rabbitQueueName: "kandalf-users.user.registered"
+  rabbitDurableQueue: true
+  rabbitAutoDeleteQueue: false

@@ -56,7 +56,6 @@ type KafkaConfig struct {
 // For details - read docs for github.com/hellofresh/stats-go package
 type StatsConfig struct {
 	DSN           string `envconfig:"STATS_DSN"`
-	Prefix        string `envconfig:"STATS_PREFIX"`
 	ErrorsSection string `envconfig:"STATS_ERRORS_SECTION"`
 }
 

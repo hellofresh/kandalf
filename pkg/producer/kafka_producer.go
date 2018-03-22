@@ -3,8 +3,8 @@ package producer
 import (
 	"github.com/Shopify/sarama"
 	"github.com/hellofresh/kandalf/pkg/config"
-	"github.com/hellofresh/stats-go"
 	"github.com/hellofresh/stats-go/bucket"
+	"github.com/hellofresh/stats-go/client"
 	log "github.com/sirupsen/logrus"
 )
 
@@ -15,23 +15,23 @@ const (
 // KafkaProducer is a Producer implementation for publishing messages to Kafka
 type KafkaProducer struct {
 	kafkaClient sarama.SyncProducer
-	statsClient stats.Client
+	statsClient client.Client
 }
 
 // NewKafkaProducer instantiates and establishes new Kafka connection
-func NewKafkaProducer(kafkaConfig config.KafkaConfig, statsClient stats.Client) (Producer, error) {
+func NewKafkaProducer(kafkaConfig config.KafkaConfig, statsClient client.Client) (Producer, error) {
 	cnf := sarama.NewConfig()
 	cnf.Producer.RequiredAcks = sarama.WaitForAll
 	cnf.Producer.Retry.Max = kafkaConfig.MaxRetry
 	// Producer.Return.Successes must be true to be used in a SyncProducer
 	cnf.Producer.Return.Successes = true
 
-	client, err := sarama.NewSyncProducer(kafkaConfig.Brokers, cnf)
+	kafkaClient, err := sarama.NewSyncProducer(kafkaConfig.Brokers, cnf)
 	if err != nil {
 		return nil, err
 	}
 
-	return &KafkaProducer{kafkaClient: client, statsClient: statsClient}, nil
+	return &KafkaProducer{kafkaClient: kafkaClient, statsClient: statsClient}, nil
 }
 
 // Close closes Kafka connection

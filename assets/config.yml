@@ -13,8 +13,7 @@ kafka:
   maxRetry: 5
   pipesConfig: "/etc/kandalf/conf/pipes.yml"
 stats:
-  dsn: "statsd://statsd.local:8125"
-  prefix: "kandalf"
+  dsn: "statsd://statsd.local:8125/kandalf"
 worker:
   cycleTimeout: "2s"
   cacheSize: 10

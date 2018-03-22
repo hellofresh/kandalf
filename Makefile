@@ -17,7 +17,7 @@ IGNORED_PACKAGES := /vendor/
 all: clean deps build
 
 deps:
-	@echo "$(OK_COLOR)==> Installing glide dependencies$(NO_COLOR)"
+	@echo "$(OK_COLOR)==> Installing dependencies$(NO_COLOR)"
 	@go get -u github.com/golang/dep/cmd/dep
 	@go get -u github.com/golang/lint/golint
 	@dep ensure

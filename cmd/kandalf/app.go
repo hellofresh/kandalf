@@ -12,7 +12,9 @@ import (
 	"github.com/hellofresh/kandalf/pkg/workers"
 	"github.com/hellofresh/stats-go"
 	"github.com/hellofresh/stats-go/bucket"
+	"github.com/hellofresh/stats-go/client"
 	"github.com/hellofresh/stats-go/hooks"
+	statsLogger "github.com/hellofresh/stats-go/log"
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 )
@@ -77,8 +79,17 @@ func RunApp(cmd *cobra.Command, args []string) {
 	<-forever
 }
 
-func initStatsClient(config config.StatsConfig) stats.Client {
-	statsClient, err := stats.NewClient(config.DSN, config.Prefix)
+func initStatsClient(config config.StatsConfig) client.Client {
+	statsLogger.SetHandler(func(msg string, fields map[string]interface{}, err error) {
+		entry := log.WithFields(log.Fields(fields))
+		if err == nil {
+			entry.Debug(msg)
+		} else {
+			entry.WithError(err).Error(msg)
+		}
+	})
+
+	statsClient, err := stats.NewClient(config.DSN)
 	failOnError(err, "Failed to init stats client!")
 
 	log.AddHook(hooks.NewLogrusHook(statsClient, config.ErrorsSection))

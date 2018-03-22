@@ -9,8 +9,8 @@ import (
 	"github.com/hellofresh/kandalf/pkg/config"
 	"github.com/hellofresh/kandalf/pkg/producer"
 	"github.com/hellofresh/kandalf/pkg/storage"
-	"github.com/hellofresh/stats-go"
 	"github.com/hellofresh/stats-go/bucket"
+	"github.com/hellofresh/stats-go/client"
 	log "github.com/sirupsen/logrus"
 )
 
@@ -19,8 +19,8 @@ const (
 )
 
 var (
-	errMarshalMessage = errors.New("Failed to marshal message")
-	errPutToStorage   = errors.New("Failed to put message to storage")
+	errMarshalMessage = errors.New("failed to marshal message")
+	errPutToStorage   = errors.New("failed to put message to storage")
 )
 
 // BridgeWorker contains data for bridge worker that does the actual job - handles messages transfer
@@ -31,7 +31,7 @@ type BridgeWorker struct {
 	config      config.WorkerConfig
 	storage     storage.PersistentStorage
 	producer    producer.Producer
-	statsClient stats.Client
+	statsClient client.Client
 
 	cache             []*producer.Message
 	lastFlush         time.Time
@@ -39,7 +39,7 @@ type BridgeWorker struct {
 }
 
 // NewBridgeWorker creates instance of BridgeWorker
-func NewBridgeWorker(config config.WorkerConfig, storage storage.PersistentStorage, producer producer.Producer, statsClient stats.Client) (*BridgeWorker, error) {
+func NewBridgeWorker(config config.WorkerConfig, storage storage.PersistentStorage, producer producer.Producer, statsClient client.Client) (*BridgeWorker, error) {
 	return &BridgeWorker{config: config, storage: storage, producer: producer, statsClient: statsClient}, nil
 }
 

@@ -11,6 +11,7 @@ import (
 	"github.com/hellofresh/kandalf/pkg/producer"
 	"github.com/hellofresh/kandalf/pkg/storage"
 	"github.com/hellofresh/stats-go"
+	"github.com/hellofresh/stats-go/client"
 	"github.com/satori/go.uuid"
 	"github.com/stretchr/testify/assert"
 )
@@ -88,7 +89,7 @@ func generateRandomMessages(n int) []*producer.Message {
 
 func TestBridgeWorker_MessageHandler(t *testing.T) {
 	workerConfig := config.WorkerConfig{}
-	statsClient, _ := stats.NewClient("memory://", "")
+	statsClient, _ := stats.NewClient("memory://")
 	mockStorage := &mockStorage{}
 	mockProducer := &mockProducer{}
 
@@ -100,7 +101,7 @@ func TestBridgeWorker_MessageHandler(t *testing.T) {
 		worker.MessageHandler(msg.Body, config.Pipe{KafkaTopic: msg.Topic})
 	}
 
-	memoryStats, _ := statsClient.(*stats.MemoryClient)
+	memoryStats, _ := statsClient.(*client.Memory)
 	assert.Equal(t, messagesToPublish, memoryStats.CountMetrics[fmt.Sprintf("total.%s", statsWorkerSection)])
 	assert.Equal(t, messagesToPublish, memoryStats.CountMetrics[fmt.Sprintf("total.%s-ok", statsWorkerSection)])
 	assert.Equal(t, 0, memoryStats.CountMetrics[fmt.Sprintf("total.%s-fail", statsWorkerSection)])
@@ -119,7 +120,7 @@ func TestBridgeWorker_MessageHandler(t *testing.T) {
 
 func TestBridgeWorker_cacheMessage(t *testing.T) {
 	workerConfig := config.WorkerConfig{}
-	statsClient, _ := stats.NewClient("memory://", "")
+	statsClient, _ := stats.NewClient("memory://")
 	mockStorage := &mockStorage{}
 	mockProducer := &mockProducer{}
 
@@ -134,7 +135,7 @@ func TestBridgeWorker_cacheMessage(t *testing.T) {
 	assert.Equal(t, messagesToPublish, len(worker.cache))
 	assert.Equal(t, messages, worker.cache)
 
-	memoryStats, _ := statsClient.(*stats.MemoryClient)
+	memoryStats, _ := statsClient.(*client.Memory)
 	assert.Equal(t, messagesToPublish, memoryStats.CountMetrics[fmt.Sprintf("total.%s", statsWorkerSection)])
 	assert.Equal(t, messagesToPublish, memoryStats.CountMetrics[fmt.Sprintf("total.%s-ok", statsWorkerSection)])
 	assert.Equal(t, 0, memoryStats.CountMetrics[fmt.Sprintf("total.%s-fail", statsWorkerSection)])
@@ -154,7 +155,7 @@ func getDefaultBridgeWorker(t *testing.T) *BridgeWorker {
 		CacheFlushTimeout:  time.Duration(1) * time.Hour,
 		StorageReadTimeout: time.Duration(1) * time.Hour,
 	}
-	statsClient, _ := stats.NewClient("memory://", "")
+	statsClient, _ := stats.NewClient("memory://")
 	mockStorage := &mockStorage{t: t}
 	mockProducer := &mockProducer{t: t}
 
@@ -246,10 +247,10 @@ func TestNewBridgeWorker_publishMessages(t *testing.T) {
 	}
 
 	// let's screw some messages publishing to test fallback to storage
-	mockProducer.publishResult[2] = errors.New("Error for publish #2")
-	mockProducer.publishResult[3] = errors.New("Error for publish #3")
+	mockProducer.publishResult[2] = errors.New("error for publish #2")
+	mockProducer.publishResult[3] = errors.New("error for publish #3")
 
-	mockStorage.putResult = []error{nil, errors.New("Error for storage.Put() #1")}
+	mockStorage.putResult = []error{nil, errors.New("error for storage.Put() #1")}
 
 	worker.publishMessages(messages)
 
@@ -276,7 +277,7 @@ func TestBridgeWorker_populateCacheFromStorage(t *testing.T) {
 	// broken json
 	mockStorage.getResult = append(mockStorage.getResult, mockGetResult{[]byte("i no json"), nil})
 	// problems with storage
-	mockStorage.getResult = append(mockStorage.getResult, mockGetResult{nil, errors.New("Some problems")})
+	mockStorage.getResult = append(mockStorage.getResult, mockGetResult{nil, errors.New("some problems")})
 	// second normal message
 	mockStorage.getResult = append(mockStorage.getResult, mockGetResult{jsonData2, nil})
 
@@ -303,14 +304,14 @@ func TestBridgeWorker_populateCacheFromStorage_maxErrors(t *testing.T) {
 	// broken json
 	mockStorage.getResult = append(mockStorage.getResult, mockGetResult{[]byte("i no json"), nil})
 	// problems with storage
-	mockStorage.getResult = append(mockStorage.getResult, mockGetResult{nil, errors.New("Some problems")})
+	mockStorage.getResult = append(mockStorage.getResult, mockGetResult{nil, errors.New("some problems")})
 	// broken json again, this resets max errors counter
 	mockStorage.getResult = append(mockStorage.getResult, mockGetResult{[]byte("i no json"), nil})
 	// second normal message
 	mockStorage.getResult = append(mockStorage.getResult, mockGetResult{jsonData2, nil})
 	// problems with storage two times, so it should break the cycle
-	mockStorage.getResult = append(mockStorage.getResult, mockGetResult{nil, errors.New("Some problems")})
-	mockStorage.getResult = append(mockStorage.getResult, mockGetResult{nil, errors.New("Some problems")})
+	mockStorage.getResult = append(mockStorage.getResult, mockGetResult{nil, errors.New("some problems")})
+	mockStorage.getResult = append(mockStorage.getResult, mockGetResult{nil, errors.New("some problems")})
 	// third normal message, this should never be processed
 	mockStorage.getResult = append(mockStorage.getResult, mockGetResult{jsonData3, nil})
 
@@ -323,7 +324,7 @@ func TestBridgeWorker_populateCacheFromStorage_maxErrors(t *testing.T) {
 func TestBridgeWorker_Close(t *testing.T) {
 	worker := getDefaultBridgeWorker(t)
 
-	errStorageClose := errors.New("Some storage error")
+	errStorageClose := errors.New("some storage error")
 	mockStorage := &mockStorage{t: t, closeResult: errStorageClose}
 	worker.storage = mockStorage
 	worker.readStorageTicker = time.NewTicker(worker.config.StorageReadTimeout)
@@ -354,7 +355,7 @@ func TestBridgeWorker_Close(t *testing.T) {
 
 func TestBridgeWorker_storeMessage_errors(t *testing.T) {
 	worker := getDefaultBridgeWorker(t)
-	mockStorage := &mockStorage{t: t, putResult: []error{nil, errors.New("Some put error")}}
+	mockStorage := &mockStorage{t: t, putResult: []error{nil, errors.New("some put error")}}
 	worker.storage = mockStorage
 
 	// I tried to make a json marshal error here, but no luck, it works

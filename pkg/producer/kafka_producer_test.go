@@ -8,6 +8,7 @@ import (
 	"github.com/Shopify/sarama"
 	"github.com/hellofresh/stats-go"
 	"github.com/hellofresh/stats-go/bucket"
+	"github.com/hellofresh/stats-go/client"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -41,10 +42,10 @@ func (p *mockSyncProducer) Close() error {
 }
 
 func TestKafkaProducer_Close(t *testing.T) {
-	closeError := errors.New("Close error result")
+	closeError := errors.New("close error result")
 
 	mockProducer := &mockSyncProducer{closeResult: closeError}
-	statsClient, _ := stats.NewClient("memory://", "")
+	statsClient, _ := stats.NewClient("memory://")
 
 	kafkaProducer := &KafkaProducer{mockProducer, statsClient}
 
@@ -55,7 +56,7 @@ func TestKafkaProducer_Close(t *testing.T) {
 
 func TestKafkaProducer_Publish(t *testing.T) {
 	mockProducer := &mockSyncProducer{}
-	statsClient, _ := stats.NewClient("memory://", "")
+	statsClient, _ := stats.NewClient("memory://")
 
 	body := "hello message body!"
 	topic := "some topic"
@@ -66,10 +67,10 @@ func TestKafkaProducer_Publish(t *testing.T) {
 	err := kafkaProducer.Publish(*msg)
 	assert.NoError(t, err)
 
-	memoryStats, _ := statsClient.(*stats.MemoryClient)
-	assert.Equal(t, 1, memoryStats.CountMetrics[fmt.Sprintf("%s.publish.%s.-", statsKafkaSection, bucket.SanitizeMetricName(topic))])
-	assert.Equal(t, 1, memoryStats.CountMetrics[fmt.Sprintf("%s-ok.publish.%s.-", statsKafkaSection, bucket.SanitizeMetricName(topic))])
-	assert.Equal(t, 0, memoryStats.CountMetrics[fmt.Sprintf("%s-fail.publish.%s.-", statsKafkaSection, bucket.SanitizeMetricName(topic))])
+	memoryStats, _ := statsClient.(*client.Memory)
+	assert.Equal(t, 1, memoryStats.CountMetrics[fmt.Sprintf("%s.publish.%s.-", statsKafkaSection, bucket.SanitizeMetricName(topic, false))])
+	assert.Equal(t, 1, memoryStats.CountMetrics[fmt.Sprintf("%s-ok.publish.%s.-", statsKafkaSection, bucket.SanitizeMetricName(topic, false))])
+	assert.Equal(t, 0, memoryStats.CountMetrics[fmt.Sprintf("%s-fail.publish.%s.-", statsKafkaSection, bucket.SanitizeMetricName(topic, false))])
 
 	messageValue, err := mockProducer.lastSendMessageParams.Value.Encode()
 	assert.NoError(t, err)
@@ -78,11 +79,11 @@ func TestKafkaProducer_Publish(t *testing.T) {
 }
 
 func TestKafkaProducer_Publish_error(t *testing.T) {
-	sendMessageError := errors.New("Send message error")
+	sendMessageError := errors.New("send message error")
 	sendMessageResult := sendMessageResult{0, 0, sendMessageError}
 
 	mockProducer := &mockSyncProducer{sendMessageResult: sendMessageResult}
-	statsClient, _ := stats.NewClient("memory://", "")
+	statsClient, _ := stats.NewClient("memory://")
 
 	body := "hello message body!"
 	topic := "some topic"
@@ -94,8 +95,8 @@ func TestKafkaProducer_Publish_error(t *testing.T) {
 	assert.Error(t, err)
 	assert.Equal(t, sendMessageError, err)
 
-	memoryStats, _ := statsClient.(*stats.MemoryClient)
-	assert.Equal(t, 1, memoryStats.CountMetrics[fmt.Sprintf("%s.publish.%s.-", statsKafkaSection, bucket.SanitizeMetricName(topic))])
-	assert.Equal(t, 0, memoryStats.CountMetrics[fmt.Sprintf("%s-ok.publish.%s.-", statsKafkaSection, bucket.SanitizeMetricName(topic))])
-	assert.Equal(t, 1, memoryStats.CountMetrics[fmt.Sprintf("%s-fail.publish.%s.-", statsKafkaSection, bucket.SanitizeMetricName(topic))])
+	memoryStats, _ := statsClient.(*client.Memory)
+	assert.Equal(t, 1, memoryStats.CountMetrics[fmt.Sprintf("%s.publish.%s.-", statsKafkaSection, bucket.SanitizeMetricName(topic, false))])
+	assert.Equal(t, 0, memoryStats.CountMetrics[fmt.Sprintf("%s-ok.publish.%s.-", statsKafkaSection, bucket.SanitizeMetricName(topic, false))])
+	assert.Equal(t, 1, memoryStats.CountMetrics[fmt.Sprintf("%s-fail.publish.%s.-", statsKafkaSection, bucket.SanitizeMetricName(topic, false))])
 }

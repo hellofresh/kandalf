@@ -29,3 +29,10 @@ pipes:
   rabbitDurableQueue: true
   rabbitAutoDeleteQueue: false
   rabbitTransientExchange: false
+
+- kafkaTopic: "missing.transient.exchange"
+  rabbitExchangeName: "customers"
+  rabbitRoutingKey: "badge.received"
+  rabbitQueueName: "kandalf-customers-badge.received"
+  rabbitDurableQueue: false
+  rabbitAutoDeleteQueue: true

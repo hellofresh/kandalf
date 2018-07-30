@@ -34,6 +34,9 @@ func assertPipes(t *testing.T, pipes []Pipe) {
 	assert.Equal(t, true, pipes[2].RabbitDurableQueue)
 	assert.Equal(t, false, pipes[2].RabbitAutoDeleteQueue)
 	assert.Equal(t, false, pipes[2].RabbitTransientExchange)
+
+	assert.Equal(t, "missing.transient.exchange", pipes[3].KafkaTopic)
+	assert.Equal(t, false, pipes[3].RabbitTransientExchange)
 }
 
 func TestLoadPipesFromFile(t *testing.T) {
@@ -48,7 +51,7 @@ func TestLoadPipesFromFile(t *testing.T) {
 
 	pipes, err := LoadPipesFromFile(pipesPath)
 	require.NoError(t, err)
-	assert.Len(t, pipes, 3)
+	assert.Len(t, pipes, 4)
 
 	assertPipes(t, pipes)
 }
@@ -81,13 +84,13 @@ func TestPipe_String(t *testing.T) {
 	pipe := Pipe{
 		KafkaTopic:              "topic",
 		RabbitExchangeName:      "rqExchange",
+		RabbitTransientExchange: false,
 		RabbitRoutingKey:        []string{"rqKey"},
 		RabbitQueueName:         "rqQueue",
 		RabbitDurableQueue:      true,
 		RabbitAutoDeleteQueue:   false,
-		RabbitTransientExchange: false,
 	}
-	pipeJSON := `{"KafkaTopic":"topic","RabbitExchangeName":"rqExchange","RabbitRoutingKey":["rqKey"],"RabbitQueueName":"rqQueue","RabbitDurableQueue":true,"RabbitAutoDeleteQueue":false,"RabbitTransientExchange":false}`
+	pipeJSON := `{"KafkaTopic":"topic","RabbitExchangeName":"rqExchange","RabbitTransientExchange":false,"RabbitRoutingKey":["rqKey"],"RabbitQueueName":"rqQueue","RabbitDurableQueue":true,"RabbitAutoDeleteQueue":false}`
 
 	assert.Equal(t, pipeJSON, pipe.String())
 	assert.Equal(t, pipeJSON, fmt.Sprintf("%s", pipe))

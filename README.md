@@ -78,6 +78,7 @@ The rules, defining which messages should be send to which Kafka topics, are def
 ```yaml
 - kafkaTopic: "loyalty"                                # name of the topic in Kafka where message will be sent
   rabbitExchangeName: "customers"                      # name of the exchange in RabbitMQ
+  rabbitTransientExchange: false                       # determines if the exchange should be declared as durable or transient
   rabbitRoutingKey: "badge.received"                   # routing key for exchange
   rabbitQueueName: "kandalf-customers-badge.received"  # the name of RabbitMQ queue to read messages from
   rabbitDurableQueue: true                             # determines if the queue should be declared as durable

@@ -32,7 +32,15 @@ func NewQueuesHandler(pipes []config.Pipe, handler MessageHandler, statsClient c
 
 		for _, pipe := range pipes {
 			operation = bucket.MetricOperation{statsOpConnect, "exchange", pipe.RabbitExchangeName}
-			err = channel.ExchangeDeclare(pipe.RabbitExchangeName, exchangeTypeTopic, true, false, false, false, nil)
+			err = channel.ExchangeDeclare(
+				pipe.RabbitExchangeName,
+				exchangeTypeTopic,
+				!pipe.RabbitTransientExchange,
+				false,
+				false,
+				false,
+				nil,
+			)
 			statsClient.TrackOperation(statsAMQPSection, operation, nil, nil == err)
 			if err != nil {
 				log.WithError(err).Error("Failed to declare exchange")

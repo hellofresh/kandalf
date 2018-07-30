@@ -27,7 +27,7 @@
 
 [[constraint]]
   name = "github.com/Shopify/sarama"
-  version = "1.16.0"
+  version = "1.17.0"
 
 [[constraint]]
   name = "github.com/garyburd/redigo"
@@ -35,11 +35,11 @@
 
 [[constraint]]
   name = "github.com/hellofresh/logging-go"
-  version = "0.2.0"
+  version = "0.3.0"
 
 [[constraint]]
   name = "github.com/hellofresh/stats-go"
-  version = "0.6.3"
+  version = "0.8.0"
 
 [[constraint]]
   name = "github.com/kelseyhightower/envconfig"
@@ -55,11 +55,11 @@
 
 [[constraint]]
   name = "github.com/sirupsen/logrus"
-  version = "1.0.5"
+  version = "1.0.6"
 
 [[constraint]]
   name = "github.com/spf13/cobra"
-  version = "0.0.1"
+  version = "0.0.3"
 
 [[constraint]]
   name = "github.com/spf13/viper"
@@ -71,7 +71,7 @@
 
 [[constraint]]
   name = "github.com/stretchr/testify"
-  version = "1.2.1"
+  version = "1.2.2"
 
 [prune]
   go-tests = true

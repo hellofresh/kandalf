@@ -9,6 +9,7 @@ pipes:
   rabbitQueueName: "kandalf-customers-order.created"
   rabbitDurableQueue: true
   rabbitAutoDeleteQueue: false
+  rabbitTransientExchange: false
 
 - kafkaTopic: "loyalty"
   rabbitExchangeName: "customers"
@@ -16,6 +17,7 @@ pipes:
   rabbitQueueName: "kandalf-customers-badge.received"
   rabbitDurableQueue: false
   rabbitAutoDeleteQueue: true
+  rabbitTransientExchange: true
 
 - kafkaTopic: "topic_for_several_events"
   rabbitExchangeName: "users"
@@ -26,3 +28,4 @@ pipes:
   rabbitQueueName: "kandalf-users.user.registered"
   rabbitDurableQueue: true
   rabbitAutoDeleteQueue: false
+  rabbitTransientExchange: false

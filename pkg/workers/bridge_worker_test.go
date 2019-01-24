@@ -7,12 +7,12 @@ import (
 	"testing"
 	"time"
 
+	"github.com/gofrs/uuid"
 	"github.com/hellofresh/kandalf/pkg/config"
 	"github.com/hellofresh/kandalf/pkg/producer"
 	"github.com/hellofresh/kandalf/pkg/storage"
 	"github.com/hellofresh/stats-go"
 	"github.com/hellofresh/stats-go/client"
-	"github.com/satori/go.uuid"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -82,7 +82,7 @@ func (p *mockProducer) Close() error {
 func generateRandomMessages(n int) []*producer.Message {
 	result := make([]*producer.Message, n)
 	for i := 0; i < n; i++ {
-		result[i] = producer.NewMessage([]byte(uuid.NewV4().String()), uuid.NewV4().String())
+		result[i] = producer.NewMessage([]byte(uuid.Must(uuid.NewV4()).String()), uuid.Must(uuid.NewV4()).String())
 	}
 	return result
 }
@@ -363,7 +363,7 @@ func TestBridgeWorker_storeMessage_errors(t *testing.T) {
 	err := worker.storeMessage(msg1)
 	assert.NoError(t, err)
 
-	msg2 := producer.NewMessage([]byte(uuid.NewV4().String()), uuid.NewV4().String())
+	msg2 := producer.NewMessage([]byte(uuid.Must(uuid.NewV4()).String()), uuid.Must(uuid.NewV4()).String())
 	err = worker.storeMessage(msg2)
 	assert.Error(t, err)
 	assert.Equal(t, errPutToStorage, err)

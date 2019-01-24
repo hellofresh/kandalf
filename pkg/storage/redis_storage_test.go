@@ -4,8 +4,8 @@ import (
 	"errors"
 	"testing"
 
+	"github.com/gofrs/uuid"
 	"github.com/rafaeljusto/redigomock"
-	"github.com/satori/go.uuid"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -36,7 +36,7 @@ func TestRedisStorage_ping_nok(t *testing.T) {
 }
 
 func TestRedisStorage_ping_error(t *testing.T) {
-	redisErr := errors.New("Test redis error")
+	redisErr := errors.New("test redis error")
 
 	conn := redigomock.NewConn()
 	cmd := conn.Command("PING").ExpectError(redisErr)
@@ -53,7 +53,7 @@ func TestRedisStorage_ping_error(t *testing.T) {
 
 func TestRedisStorage_put_ok(t *testing.T) {
 	data := []byte("Some data")
-	key := uuid.NewV4().String()
+	key := uuid.Must(uuid.NewV4()).String()
 
 	conn := redigomock.NewConn()
 	cmd := conn.Command("LPUSH", key, data).Expect(int64(1))
@@ -67,9 +67,9 @@ func TestRedisStorage_put_ok(t *testing.T) {
 }
 
 func TestRedisStorage_put_error(t *testing.T) {
-	redisErr := errors.New("Test redis error")
+	redisErr := errors.New("test redis error")
 	data := []byte("Some data")
-	key := uuid.NewV4().String()
+	key := uuid.Must(uuid.NewV4()).String()
 
 	conn := redigomock.NewConn()
 	cmd := conn.Command("LPUSH", key, data).ExpectError(redisErr)
@@ -99,7 +99,7 @@ func TestRedisStorage_get_ok(t *testing.T) {
 }
 
 func TestRedisStorage_get_empty(t *testing.T) {
-	key := uuid.NewV4().String()
+	key := uuid.Must(uuid.NewV4()).String()
 
 	conn := redigomock.NewConn()
 	cmd := conn.Command("LPOP", key).Expect(nil)
@@ -114,7 +114,7 @@ func TestRedisStorage_get_empty(t *testing.T) {
 }
 
 func TestRedisStorage_get_error(t *testing.T) {
-	redisErr := errors.New("Test redis error")
+	redisErr := errors.New("test redis error")
 
 	conn := redigomock.NewConn()
 	cmd := conn.Command("LPOP").ExpectError(redisErr)

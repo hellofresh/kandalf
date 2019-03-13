@@ -97,7 +97,7 @@ You can find sample Kafka Pipes Config file in [assets/pipes.yml](./assets/pipes
 
 For testing and development you can use [`docker-compose`](./docker-compose.yml) file with all the required services.
 
-For production you can use minimalistic prebuilt [hellofresh/kandalf](quay.io/hellofresh/kandalf) image as base image or mount pipes configuration volume to `/etc/kandalf/conf/`.
+For production you can use minimalistic prebuilt [hellofresh/kandalf](https://quay.io/repository/hellofresh/kandalf) image as base image or mount pipes configuration volume to `/etc/kandalf/conf/`.
 
 ## Todo
 

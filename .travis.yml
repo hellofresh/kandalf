@@ -1,13 +1,15 @@
 language: go
 
 go:
-  - "1.10"
+  - "1.11"
+  - "1.12"
   - stable
 
 install:
   - mkdir -p $GOPATH/bin
   - go get github.com/go-playground/overalls
-  - make deps
+  - go get golang.org/x/lint/golint
+  - GO111MODULE=on go mod vendor
 
 script:
   - make test

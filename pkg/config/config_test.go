@@ -6,6 +6,7 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 func assertConfig(t *testing.T, globalConfig *GlobalConfig) {
@@ -32,16 +33,15 @@ func assertConfig(t *testing.T, globalConfig *GlobalConfig) {
 
 func TestLoad(t *testing.T) {
 	wd, err := os.Getwd()
-	assert.Nil(t, err)
-	assert.Contains(t, wd, "github.com/hellofresh/kandalf")
+	require.NoError(t, err)
 
 	// .../github.com/hellofresh/kandalf/pkg/config/../../assets/config.yml
 	globalConfigPath := filepath.Join(wd, "..", "..", "assets", "config.yml")
 	_, err = os.Stat(globalConfigPath)
-	assert.Nil(t, err)
+	require.NoError(t, err)
 
 	globalConfig, err := Load(globalConfigPath)
-	assert.Nil(t, err)
+	require.NoError(t, err)
 
 	assertConfig(t, globalConfig)
 }

@@ -42,12 +42,11 @@ func assertPipes(t *testing.T, pipes []Pipe) {
 func TestLoadPipesFromFile(t *testing.T) {
 	wd, err := os.Getwd()
 	require.NoError(t, err)
-	assert.Contains(t, wd, "github.com/hellofresh/kandalf")
 
 	// .../github.com/hellofresh/kandalf/pkg/config/../../assets/pipes.yml
 	pipesPath := filepath.Join(wd, "..", "..", "assets", "pipes.yml")
 	_, err = os.Stat(pipesPath)
-	assert.Nil(t, err)
+	require.NoError(t, err)
 
 	pipes, err := LoadPipesFromFile(pipesPath)
 	require.NoError(t, err)
@@ -59,7 +58,6 @@ func TestLoadPipesFromFile(t *testing.T) {
 func TestLoadPipesFromFile_Error(t *testing.T) {
 	wd, err := os.Getwd()
 	require.NoError(t, err)
-	assert.Contains(t, wd, "github.com/hellofresh/kandalf")
 
 	// non-supported file type
 	// .../github.com/hellofresh/kandalf/pkg/config/pipes.go

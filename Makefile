@@ -14,13 +14,7 @@ IGNORED_PACKAGES := /vendor/
 
 .PHONY: all clean deps build
 
-all: clean deps build
-
-deps:
-	@echo "$(OK_COLOR)==> Installing dependencies$(NO_COLOR)"
-	@go get -u github.com/golang/dep/cmd/dep
-	@go get -u github.com/golang/lint/golint
-	@dep ensure -v -vendor-only
+all: clean build
 
 build:
 	@echo "$(OK_COLOR)==> Building... $(NO_COLOR)"

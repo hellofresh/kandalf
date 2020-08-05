@@ -1,9 +1,9 @@
 language: go
 
 go:
-  - "1.11"
   - "1.12"
   - "1.13"
+  - "1.14"
   - stable
 
 install:
@@ -16,4 +16,3 @@ script:
   - make test
   - $GOPATH/bin/overalls -project=github.com/hellofresh/kandalf -covermode=count
   - if [ "$TRAVIS_SECURE_ENV_VARS" == "true" ]; then bash <(curl -s https://codecov.io/bash) -f overalls.coverprofile; fi
-

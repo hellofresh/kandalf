@@ -17,7 +17,7 @@ The main idea is to read messages from provided exchanges in [RabbitMQ](https://
 
 Application uses intermediate permanent storage for keeping read messages in case of Kafka unavailability.
 
-Service is written in Go language and can be build with go compiler of version 1.6 and above.
+Service is written in Go language and can be build with go compiler of version 1.12 and above.
 
 ## Configuring
 
@@ -110,6 +110,5 @@ To start contributing, please check [CONTRIBUTING](CONTRIBUTING.md).
 
 ## Documentation
 
-* Kandalf Docs: https://hellofresh.gitbooks.io/kandalf
 * Kandalf Go Docs: https://godoc.org/github.com/hellofresh/kandalf
 * Go lang: https://golang.org/

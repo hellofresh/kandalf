@@ -3,7 +3,9 @@ module github.com/hellofresh/kandalf
 go 1.14
 
 require (
+	github.com/BurntSushi/toml v0.3.1 // indirect
 	github.com/Shopify/sarama v1.17.0
+	github.com/Shopify/toxiproxy v2.1.4+incompatible // indirect
 	github.com/TV4/logrus-stackdriver-formatter v0.1.0 // indirect
 	github.com/bshuster-repo/logrus-logstash-hook v0.4.1 // indirect
 	github.com/davecgh/go-spew v1.1.0 // indirect
@@ -11,7 +13,6 @@ require (
 	github.com/eapache/go-xerial-snappy v0.0.0-20180703130627-040cc1a32f57 // indirect
 	github.com/eapache/queue v1.1.0 // indirect
 	github.com/fiam/gounidecode v0.0.0-20150629112515-8deddbd03fec // indirect
-	github.com/fsnotify/fsnotify v1.4.7 // indirect
 	github.com/garyburd/redigo v1.6.0
 	github.com/go-stack/stack v1.7.0 // indirect
 	github.com/gofrs/uuid v3.2.0+incompatible
@@ -21,8 +22,10 @@ require (
 	github.com/hellofresh/stats-go v0.8.0
 	github.com/inconshreveable/mousetrap v1.0.0 // indirect
 	github.com/kelseyhightower/envconfig v1.3.0
+	github.com/kr/pretty v0.2.1 // indirect
 	github.com/magiconair/properties v1.8.0 // indirect
 	github.com/mitchellh/mapstructure v0.0.0-20180715050151-f15292f7a699 // indirect
+	github.com/onsi/ginkgo v1.14.0 // indirect
 	github.com/pelletier/go-toml v1.2.0 // indirect
 	github.com/pierrec/lz4 v2.0.3+incompatible // indirect
 	github.com/pkg/errors v0.8.0 // indirect
@@ -38,10 +41,8 @@ require (
 	github.com/spf13/viper v1.0.2
 	github.com/streadway/amqp v0.0.0-20180528204448-e5adc2ada8b8
 	github.com/stretchr/testify v1.2.2
-	golang.org/x/crypto v0.0.0-20180723164146-c126467f60eb // indirect
-	golang.org/x/sys v0.0.0-20180724212812-e072cadbbdc8 // indirect
-	golang.org/x/text v0.3.0 // indirect
+	gopkg.in/airbrake/gobrake.v2 v2.0.9 // indirect
 	gopkg.in/alexcesaro/statsd.v2 v2.0.0 // indirect
+	gopkg.in/gemnasium/logrus-airbrake-hook.v2 v2.1.2 // indirect
 	gopkg.in/gemnasium/logrus-graylog-hook.v2 v2.0.7 // indirect
-	gopkg.in/yaml.v2 v2.2.1 // indirect
 )

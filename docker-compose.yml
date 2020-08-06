@@ -1,47 +1,73 @@
 # DO NOT USE IN PRODUCTION. THIS FILE IS ONLY FOR TESTING PURPOSES.
-version: "2"
+version: "3"
 services:
-    kandalf:
-        image: quay.io/hellofresh/kandalf
-        volumes:
-            - "./_build/out/linux:/app"
-            - "./_build/resources:/config"
-        environment:
-            LOG_LEVEL: "debug"
-            RABBIT_DSN: "kandalf-rabbit:5672"
-            STORAGE_DSN: "redis://kandalf-redis:6379/?key=kandalf"
-            KAFKA_BROKERS: "kandalf-kafka:9092"
-        links:
-            - kafka
-            - redis
-            - rmq
-        networks:
-            - kandalf
+  kandalf:
+    image: quay.io/hellofresh/kandalf
+    volumes:
+      - "./_build/out/linux:/app"
+      - "./_build/resources:/config"
+    environment:
+      LOG_LEVEL: "debug"
+      RABBIT_DSN: "rabbit:5672"
+      STORAGE_DSN: "redis://redis:6379/?key=kandalf"
+      KAFKA_BROKERS: "kafka:29092"
+    depends_on:
+      - kafka
+      - redis
+      - rabbit
 
-    kandalf-kafka:
-        image: spotify/kafka
-        ports:
-            - 9092
-        environment:
-            TOPICS: "new-orders,loyalty"
-        networks:
-            - kandalf
+  zookeeper:
+    image: confluentinc/cp-zookeeper:latest
+    environment:
+      ZOOKEEPER_CLIENT_PORT: 2181
+      ZOOKEEPER_TICK_TIME: 2000
 
-    kandalf-redis:
-        image: redis:3.2-alpine
-        ports:
-            - 6379
-        networks:
-            - kandalf
+  kafka:
+    image: wurstmeister/kafka:latest
+    restart: always
+    depends_on:
+      - zookeeper
+    ports:
+      - "9092"
+    volumes:
+      # It's the only way to deal with Kafka non-static exposed ports to host
+      # See: https://github.com/wurstmeister/kafka-docker/blob/master/start-kafka.sh#L65-L76
+      - /var/run/docker.sock:/var/run/docker.sock
+    environment:
+      KAFKA_BROKER_ID: 1
+      KAFKA_ZOOKEEPER_CONNECT: 'zookeeper:2181'
+      PORT_COMMAND: "docker port $$(hostname) 9092/tcp | cut -d: -f2"
+      KAFKA_LISTENERS: "LISTENER_INTERNAL://kafka:29092,LISTENER_HOST://:9092"
+      KAFKA_ADVERTISED_LISTENERS: LISTENER_INTERNAL://kafka:29092,LISTENER_HOST://localhost:_{PORT_COMMAND}
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: LISTENER_INTERNAL:PLAINTEXT,LISTENER_HOST:PLAINTEXT
+      KAFKA_INTER_BROKER_LISTENER_NAME: LISTENER_INTERNAL
+      KAFKA_AUTO_CREATE_TOPICS_ENABLE: 'false'
+      KAFKA_AUTO_LEADER_REBALANCE_ENABLE: 'false'
+      CONFLUENT_SUPPORT_CUSTOMER_ID: 'anonymous'
+      KAFKA_CREATE_TOPICS: 'new-orders:1:1,loyalty:1:1'
+    healthcheck:
+      test: ["CMD", "/opt/kafka/bin/kafka-topics.sh", "--list", "--bootstrap-server", "kafka:29092"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
 
-    kandalf-rabbit:
-        image: rabbitmq:3.6-management-alpine
-        ports:
-            - 5672
-            - 15672
-        networks:
-            - kandalf
+  redis:
+    image: redis:3.2-alpine
+    ports:
+      - 6379
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
 
-networks:
-    kandalf:
-        driver: bridge
+  rabbit:
+    image: rabbitmq:3.6-management-alpine
+    ports:
+      - 5672
+      - 15672
+    healthcheck:
+      test: ["CMD", "rabbitmqctl", "status"]
+      interval: 10s
+      timeout: 5s
+      retries: 5

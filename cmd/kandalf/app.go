@@ -5,11 +5,6 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/hellofresh/kandalf/pkg/amqp"
-	"github.com/hellofresh/kandalf/pkg/config"
-	"github.com/hellofresh/kandalf/pkg/producer"
-	"github.com/hellofresh/kandalf/pkg/storage"
-	"github.com/hellofresh/kandalf/pkg/workers"
 	"github.com/hellofresh/stats-go"
 	"github.com/hellofresh/stats-go/bucket"
 	"github.com/hellofresh/stats-go/client"
@@ -17,6 +12,12 @@ import (
 	statsLogger "github.com/hellofresh/stats-go/log"
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
+
+	"github.com/hellofresh/kandalf/pkg/amqp"
+	"github.com/hellofresh/kandalf/pkg/config"
+	"github.com/hellofresh/kandalf/pkg/producer"
+	"github.com/hellofresh/kandalf/pkg/storage"
+	"github.com/hellofresh/kandalf/pkg/workers"
 )
 
 // RunApp is main application bootstrap and runner
@@ -81,7 +82,7 @@ func RunApp(cmd *cobra.Command, args []string) {
 
 func initStatsClient(config config.StatsConfig) client.Client {
 	statsLogger.SetHandler(func(msg string, fields map[string]interface{}, err error) {
-		entry := log.WithFields(log.Fields(fields))
+		entry := log.WithFields(fields)
 		if err == nil {
 			entry.Debug(msg)
 		} else {

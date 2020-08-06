@@ -28,17 +28,12 @@ services:
     depends_on:
       - zookeeper
     ports:
-      - "9092"
-    volumes:
-      # It's the only way to deal with Kafka non-static exposed ports to host
-      # See: https://github.com/wurstmeister/kafka-docker/blob/master/start-kafka.sh#L65-L76
-      - /var/run/docker.sock:/var/run/docker.sock
+      - "9092:9092"
     environment:
       KAFKA_BROKER_ID: 1
       KAFKA_ZOOKEEPER_CONNECT: 'zookeeper:2181'
-      PORT_COMMAND: "docker port $$(hostname) 9092/tcp | cut -d: -f2"
       KAFKA_LISTENERS: "LISTENER_INTERNAL://kafka:29092,LISTENER_HOST://:9092"
-      KAFKA_ADVERTISED_LISTENERS: LISTENER_INTERNAL://kafka:29092,LISTENER_HOST://localhost:_{PORT_COMMAND}
+      KAFKA_ADVERTISED_LISTENERS: LISTENER_INTERNAL://kafka:29092,LISTENER_HOST://localhost:9092
       KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: LISTENER_INTERNAL:PLAINTEXT,LISTENER_HOST:PLAINTEXT
       KAFKA_INTER_BROKER_LISTENER_NAME: LISTENER_INTERNAL
       KAFKA_AUTO_CREATE_TOPICS_ENABLE: 'false'
@@ -54,7 +49,7 @@ services:
   redis:
     image: redis:3.2-alpine
     ports:
-      - 6379
+      - "6379:6379"
     healthcheck:
       test: ["CMD", "redis-cli", "ping"]
       interval: 10s
@@ -64,8 +59,8 @@ services:
   rabbit:
     image: rabbitmq:3.6-management-alpine
     ports:
-      - 5672
-      - 15672
+      - "5672:5672"
+      - "15672:15672"
     healthcheck:
       test: ["CMD", "rabbitmqctl", "status"]
       interval: 10s

@@ -6,6 +6,8 @@ import (
 
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
+
+	"github.com/hellofresh/kandalf/cmd"
 )
 
 var (
@@ -35,7 +37,9 @@ func main() {
 		Long: versionString + `. RabbitMQ to Kafka bridge.
 
 Complete documentation is available at https://github.com/hellofresh/kandalf`,
-		Run: RunApp,
+		RunE: func(c *cobra.Command, args []string) error {
+			return cmd.RunApp(version, configPath)
+		},
 	}
 	RootCmd.Flags().StringVarP(&configPath, "config", "c", "", "Source of a configuration file")
 	RootCmd.Flags().BoolVarP(&versionFlag, "version", "v", false, "Print application version")

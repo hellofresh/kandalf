@@ -1,6 +1,7 @@
-package main
+package cmd
 
 import (
+	"fmt"
 	"net/url"
 	"os"
 	"path/filepath"
@@ -11,7 +12,6 @@ import (
 	"github.com/hellofresh/stats-go/hooks"
 	statsLogger "github.com/hellofresh/stats-go/log"
 	log "github.com/sirupsen/logrus"
-	"github.com/spf13/cobra"
 
 	"github.com/hellofresh/kandalf/pkg/amqp"
 	"github.com/hellofresh/kandalf/pkg/config"
@@ -21,17 +21,24 @@ import (
 )
 
 // RunApp is main application bootstrap and runner
-func RunApp(cmd *cobra.Command, args []string) {
+func RunApp(version, configPath string) error {
 	log.WithField("version", version).Info("Kandalf starting...")
 
 	globalConfig, err := config.Load(configPath)
-	failOnError(err, "Failed to load application configuration")
+	if err != nil {
+		return fmt.Errorf("failed to load application configuration: %w", err)
+	}
 
 	err = globalConfig.Log.Apply()
-	failOnError(err, "Failed to configure logger")
+	if err != nil {
+		return fmt.Errorf("failed to configure logger: %w", err)
+	}
 	defer globalConfig.Log.Flush()
 
-	statsClient := initStatsClient(globalConfig.Stats)
+	statsClient, err := initStatsClient(globalConfig.Stats)
+	if err != nil {
+		return err
+	}
 	defer func() {
 		if err := statsClient.Close(); err != nil {
 			log.WithError(err).Error("Got error on closing stats client")
@@ -39,17 +46,25 @@ func RunApp(cmd *cobra.Command, args []string) {
 	}()
 
 	pipesList, err := config.LoadPipesFromFile(globalConfig.Kafka.PipesConfig)
-	failOnError(err, "Failed to load pipes config")
+	if err != nil {
+		return fmt.Errorf("failed to load pipes config: %w", err)
+	}
 
 	storageURL, err := url.Parse(globalConfig.StorageDSN)
-	failOnError(err, "Failed to parse Storage DSN")
+	if err != nil {
+		return fmt.Errorf("failed to load pipes config: %w", err)
+	}
 
 	persistentStorage, err := storage.NewPersistentStorage(storageURL)
-	failOnError(err, "Failed to establish Redis connection")
+	if err != nil {
+		return fmt.Errorf("failed to establish Redis connection: %w", err)
+	}
 	// Do not close storage here as it is required in Worker close to store unhandled messages
 
 	kafkaProducer, err := producer.NewKafkaProducer(globalConfig.Kafka, statsClient)
-	failOnError(err, "Failed to establish Kafka connection")
+	if err != nil {
+		return fmt.Errorf("failed to establish Kafka connection: %w", err)
+	}
 	defer func() {
 		if err := kafkaProducer.Close(); err != nil {
 			log.WithError(err).Error("Got error on closing kafka producer")
@@ -65,7 +80,9 @@ func RunApp(cmd *cobra.Command, args []string) {
 
 	queuesHandler := amqp.NewQueuesHandler(pipesList, worker.MessageHandler, statsClient)
 	amqpConnection, err := amqp.NewConnection(globalConfig.RabbitDSN, queuesHandler)
-	failOnError(err, "Failed to establish initial connection to AMQP")
+	if err != nil {
+		return fmt.Errorf("failed to establish initial connection to AMQP: %w", err)
+	}
 	defer func() {
 		if err := amqpConnection.Close(); err != nil {
 			log.WithError(err).Error("Got error on closing AMQP connection")
@@ -78,9 +95,11 @@ func RunApp(cmd *cobra.Command, args []string) {
 
 	log.Infof("[*] Waiting for users. To exit press CTRL+C")
 	<-forever
+
+	return nil
 }
 
-func initStatsClient(config config.StatsConfig) client.Client {
+func initStatsClient(config config.StatsConfig) (client.Client, error) {
 	statsLogger.SetHandler(func(msg string, fields map[string]interface{}, err error) {
 		entry := log.WithFields(fields)
 		if err == nil {
@@ -91,7 +110,9 @@ func initStatsClient(config config.StatsConfig) client.Client {
 	})
 
 	statsClient, err := stats.NewClient(config.DSN)
-	failOnError(err, "Failed to init stats client!")
+	if err != nil {
+		return nil, fmt.Errorf("failed to init stats client: %w", err)
+	}
 
 	log.AddHook(hooks.NewLogrusHook(statsClient, config.ErrorsSection))
 
@@ -103,5 +124,5 @@ func initStatsClient(config config.StatsConfig) client.Client {
 	_, appFile := filepath.Split(os.Args[0])
 	statsClient.TrackMetric("app", bucket.MetricOperation{"init", host, appFile})
 
-	return statsClient
+	return statsClient, nil
 }

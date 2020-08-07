@@ -1,9 +1,10 @@
 package storage
 
 import (
-	"github.com/stretchr/testify/assert"
 	"net/url"
 	"testing"
+
+	"github.com/stretchr/testify/assert"
 )
 
 func TestNewPersistentStorage_ErrUnknownStorage(t *testing.T) {

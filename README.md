@@ -107,8 +107,3 @@ For production you can use minimalistic prebuilt [hellofresh/kandalf](https://qu
 ## Contributing
 
 To start contributing, please check [CONTRIBUTING](CONTRIBUTING.md).
-
-## Documentation
-
-* Kandalf Go Docs: https://godoc.org/github.com/hellofresh/kandalf
-* Go lang: https://golang.org/

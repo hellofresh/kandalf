@@ -2,10 +2,12 @@ package main
 
 import (
 	"fmt"
+	"log"
 	"os"
 
-	log "github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
+
+	"github.com/hellofresh/kandalf/cmd"
 )
 
 var (
@@ -13,12 +15,6 @@ var (
 	configPath  string
 	versionFlag bool
 )
-
-func failOnError(err error, msg string) {
-	if err != nil {
-		log.WithError(err).Panic(msg)
-	}
-}
 
 func main() {
 	versionString := "Kandalf v" + version
@@ -35,11 +31,15 @@ func main() {
 		Long: versionString + `. RabbitMQ to Kafka bridge.
 
 Complete documentation is available at https://github.com/hellofresh/kandalf`,
-		Run: RunApp,
+		RunE: func(c *cobra.Command, args []string) error {
+			return cmd.RunApp(version, configPath)
+		},
 	}
 	RootCmd.Flags().StringVarP(&configPath, "config", "c", "", "Source of a configuration file")
 	RootCmd.Flags().BoolVarP(&versionFlag, "version", "v", false, "Print application version")
 
 	err := RootCmd.Execute()
-	failOnError(err, "Failed to execute root command")
+	if err != nil {
+		log.Fatal(err)
+	}
 }

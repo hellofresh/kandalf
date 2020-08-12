@@ -17,7 +17,7 @@ OS_ARCH_ARG=(386 amd64)
 for OS in ${OS_PLATFORM_ARG[@]}; do
   for ARCH in ${OS_ARCH_ARG[@]}; do
     echo "Building binary for $OS/$ARCH..."
-    GOARCH=$ARCH GOOS=$OS CGO_ENABLED=0 go build -ldflags "-s -w" -ldflags "-X main.version=${VERSION}" -o "dist/kandalf_$OS-$ARCH" $PKG_SRC
+    GOARCH=$ARCH GOOS=$OS CGO_ENABLED=0 go build -ldflags "-s -w" -ldflags "-X main.version=${VERSION}" -o "dist/kandalf_$OS-$ARCH"
   done
 done
 
@@ -27,9 +27,9 @@ OS_ARCH_ARG=(arm arm64)
 for OS in ${OS_PLATFORM_ARG[@]}; do
   for ARCH in ${OS_ARCH_ARG[@]}; do
     echo "Building binary for $OS/$ARCH..."
-    GOARCH=$ARCH GOOS=$OS CGO_ENABLED=0 go build -ldflags "-s -w" -ldflags "-X main.version=${VERSION}" -o "dist/kandalf_$OS-$ARCH" $PKG_SRC
+    GOARCH=$ARCH GOOS=$OS CGO_ENABLED=0 go build -ldflags "-s -w" -ldflags "-X main.version=${VERSION}" -o "dist/kandalf_$OS-$ARCH"
   done
 done
 
 echo "Building default binary"
-GOARCH=$ARCH GOOS=$OS CGO_ENABLED=0 go build -ldflags "-s -w" -ldflags "-X main.version=${VERSION}" -o "dist/kandalf" $PKG_SRC
+CGO_ENABLED=0 go build -ldflags "-s -w" -ldflags "-X main.version=${VERSION}" -o "dist/kandalf"

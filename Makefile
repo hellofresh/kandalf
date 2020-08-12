@@ -3,33 +3,20 @@ OK_COLOR=\033[32;01m
 ERROR_COLOR=\033[31;01m
 WARN_COLOR=\033[33;01m
 
-# Space separated patterns of packages to skip in list, test, format.
-IGNORED_PACKAGES := /vendor/
-
-.PHONY: all clean deps build
-
-all: clean build
+.PHONY: clean build
 
 build:
 	@echo "$(OK_COLOR)==> Building... $(NO_COLOR)"
 	/bin/sh -c "VERSION=${VERSION} ./build/build.sh"
 
 test:
-	@/bin/sh -c "./build/test.sh $(allpackages)"
+	@echo "$(OK_COLOR)==> Running tests$(NO_COLOR)"
+	@go test -cover -coverprofile=coverage.txt -covermode=atomic ./...
 
 lint:
-	@echo "$(OK_COLOR)==> Linting... $(NO_COLOR)"
-	@golint $(allpackages)
+	@echo "$(OK_COLOR)==> Linting with golangci-lint running in docker container$(NO_COLOR)"
+	@docker run --rm -v $(PWD):/app -w /app golangci/golangci-lint:v1.30.0 golangci-lint run -v
 
 clean:
 	@echo "$(OK_COLOR)==> Cleaning project$(NO_COLOR)"
 	@go clean
-	@rm -rf bin $GOPATH/bin
-
-# cd into the GOPATH to workaround ./... not following symlinks
-_allpackages = $(shell ( go list ./... 2>&1 1>&3 | \
-    grep -v -e "^$$" $(addprefix -e ,$(IGNORED_PACKAGES)) 1>&2 ) 3>&1 | \
-    grep -v -e "^$$" $(addprefix -e ,$(IGNORED_PACKAGES)))
-
-# memoize allpackages, so that it's executed only once and only if used
-allpackages = $(if $(__allpackages),,$(eval __allpackages := $$(_allpackages)))$(__allpackages)

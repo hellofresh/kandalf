@@ -1,5 +1,15 @@
-FROM alpine
-ADD dist/kandalf_linux-amd64 /
+FROM ubuntu:20.04
+
+ADD kandalf /bin/kandalf
+RUN chmod a+x /bin/kandalf
+
 RUN mkdir -p /etc/kandalf/conf
 ADD assets/pipes.yml /etc/kandalf/conf/
-ENTRYPOINT ["/kandalf_linux-amd64"]
+
+# Use nobody user + group
+USER 65534:65534
+
+ENTRYPOINT ["/bin/kandalf"]
+
+# just to have it
+RUN ["/bin/kandalf", "--version"]

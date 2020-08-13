@@ -5,9 +5,11 @@ WARN_COLOR=\033[33;01m
 
 .PHONY: clean build
 
+VERSION ?= "0.0.0-dev-$(shell git rev-parse --short HEAD)"
+
 build:
-	@echo "$(OK_COLOR)==> Building... $(NO_COLOR)"
-	/bin/sh -c "VERSION=${VERSION} ./build/build.sh"
+	@echo "$(OK_COLOR)==> Building (v${VERSION}) ... $(NO_COLOR)"
+	CGO_ENABLED=0 go build -ldflags "-s -w" -ldflags "-X main.version=${VERSION}" -o "kandalf"
 
 test:
 	@echo "$(OK_COLOR)==> Running tests$(NO_COLOR)"

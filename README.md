@@ -11,13 +11,19 @@
 [![GoDoc](https://godoc.org/github.com/hellofresh/kandalf?status.svg)](https://godoc.org/github.com/hellofresh/kandalf)
 [![Go Report Card](https://goreportcard.com/badge/github.com/hellofresh/kandalf)](https://goreportcard.com/report/github.com/hellofresh/kandalf)
 
+## Note
+
+As of version 0.7 docker images migrated to [Docker Hub](#how-to-run-service-in-a-docker-environment)
+
+---
+
 > RabbitMQ to Kafka bridge
 
 The main idea is to read messages from provided exchanges in [RabbitMQ](https://www.rabbitmq.com/) and send them to [Kafka](http://kafka.apache.org/).
 
 Application uses intermediate permanent storage for keeping read messages in case of Kafka unavailability.
 
-Service is written in Go language and can be build with go compiler of version 1.12 and above.
+Service is written in Go language and can be build with go compiler of version 1.14 and above.
 
 ## Configuring
 
@@ -89,7 +95,7 @@ You can find sample Kafka Pipes Config file in [assets/pipes.yml](./assets/pipes
 
 ## How to build a binary on a local machine
 
-1. Make sure that you have `go` and `make` utility installed on your machine;
+1. Make sure you have `go` and `make` utility installed on your machine;
 2. Run: `make` to install all required dependencies and build binaries;
 3. Binaries for Linux and MacOS X would be in `./dist/`.
 
@@ -97,7 +103,7 @@ You can find sample Kafka Pipes Config file in [assets/pipes.yml](./assets/pipes
 
 For testing and development you can use [`docker-compose`](./docker-compose.yml) file with all the required services.
 
-For production you can use minimalistic prebuilt [hellofresh/kandalf](https://quay.io/hellofresh/kandalf) image as base image or mount pipes configuration volume to `/etc/kandalf/conf/`.
+For production you can use minimalistic prebuilt [hellofreshtech/kandalf](https://hub.docker.com/r/hellofreshtech/kandalf/tags) image as base image or mount pipes configuration volume to `/etc/kandalf/conf/`.
 
 ## Todo
 

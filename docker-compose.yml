@@ -2,7 +2,7 @@
 version: "3"
 services:
   kandalf:
-    image: quay.io/hellofresh/kandalf
+    image: hellofreshtech/kandalf:latest
     volumes:
       - "./_build/out/linux:/app"
       - "./_build/resources:/config"

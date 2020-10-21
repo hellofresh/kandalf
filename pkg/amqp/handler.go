@@ -1,11 +1,12 @@
 package amqp
 
 import (
-	"github.com/hellofresh/kandalf/pkg/config"
 	"github.com/hellofresh/stats-go/bucket"
 	"github.com/hellofresh/stats-go/client"
 	log "github.com/sirupsen/logrus"
 	"github.com/streadway/amqp"
+
+	"github.com/hellofresh/kandalf/pkg/config"
 )
 
 const (
@@ -22,7 +23,7 @@ type MessageHandler func(body []byte, pipe config.Pipe) error
 // NewQueuesHandler instantiates queues initialisation handler
 func NewQueuesHandler(pipes []config.Pipe, handler MessageHandler, statsClient client.Client) InitQueuesHandler {
 	return func(conn *amqp.Connection) error {
-		operation := bucket.MetricOperation{statsOpConnect, "channel"}
+		operation := bucket.NewMetricOperation(statsOpConnect, "channel")
 		channel, err := conn.Channel()
 		statsClient.TrackOperation(statsAMQPSection, operation, nil, nil == err)
 		if err != nil {
@@ -31,7 +32,7 @@ func NewQueuesHandler(pipes []config.Pipe, handler MessageHandler, statsClient c
 		}
 
 		for _, pipe := range pipes {
-			operation = bucket.MetricOperation{statsOpConnect, "exchange", pipe.RabbitExchangeName}
+			operation = bucket.NewMetricOperation(statsOpConnect, "exchange", pipe.RabbitExchangeName)
 			err = channel.ExchangeDeclare(
 				pipe.RabbitExchangeName,
 				exchangeTypeTopic,
@@ -47,7 +48,7 @@ func NewQueuesHandler(pipes []config.Pipe, handler MessageHandler, statsClient c
 				return err
 			}
 
-			operation = bucket.MetricOperation{statsOpConnect, "queue", pipe.RabbitQueueName}
+			operation = bucket.NewMetricOperation(statsOpConnect, "queue", pipe.RabbitQueueName)
 			queue, err := channel.QueueDeclare(pipe.RabbitQueueName, pipe.RabbitDurableQueue, pipe.RabbitAutoDeleteQueue, false, true, nil)
 			statsClient.TrackOperation(statsAMQPSection, operation, nil, nil == err)
 			if err != nil {
@@ -56,7 +57,7 @@ func NewQueuesHandler(pipes []config.Pipe, handler MessageHandler, statsClient c
 			}
 
 			for i := range pipe.RabbitRoutingKey {
-				operation = bucket.MetricOperation{statsOpConnect, "bind", pipe.RabbitRoutingKey[i]}
+				operation = bucket.NewMetricOperation(statsOpConnect, "bind", pipe.RabbitRoutingKey[i])
 				err = channel.QueueBind(queue.Name, pipe.RabbitRoutingKey[i], pipe.RabbitExchangeName, true, nil)
 				statsClient.TrackOperation(statsAMQPSection, operation, nil, nil == err)
 				if err != nil {
@@ -83,7 +84,7 @@ func consumeMessages(messages <-chan amqp.Delivery, pipe config.Pipe, handler Me
 	for msg := range messages {
 		err := handler(msg.Body, pipe)
 
-		operation := bucket.MetricOperation{statsOpConsume, pipe.RabbitQueueName}
+		operation := bucket.NewMetricOperation(statsOpConsume, pipe.RabbitQueueName)
 		statsClient.TrackOperation(statsAMQPSection, operation, nil, nil == err)
 		if err != nil {
 			log.WithError(err).WithField("pipe", pipe.String()).

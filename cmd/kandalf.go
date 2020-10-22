@@ -122,7 +122,7 @@ func initStatsClient(config config.StatsConfig) (client.Client, error) {
 	}
 
 	_, appFile := filepath.Split(os.Args[0])
-	statsClient.TrackMetric("app", bucket.MetricOperation{"init", host, appFile})
+	statsClient.TrackMetric("app", bucket.NewMetricOperation("init", host, appFile))
 
 	return statsClient, nil
 }

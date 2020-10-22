@@ -6,12 +6,13 @@ import (
 	"sync"
 	"time"
 
-	"github.com/hellofresh/kandalf/pkg/config"
-	"github.com/hellofresh/kandalf/pkg/producer"
-	"github.com/hellofresh/kandalf/pkg/storage"
 	"github.com/hellofresh/stats-go/bucket"
 	"github.com/hellofresh/stats-go/client"
 	log "github.com/sirupsen/logrus"
+
+	"github.com/hellofresh/kandalf/pkg/config"
+	"github.com/hellofresh/kandalf/pkg/producer"
+	"github.com/hellofresh/kandalf/pkg/storage"
 )
 
 const (
@@ -117,7 +118,7 @@ func (w *BridgeWorker) cacheMessage(msg *producer.Message) error {
 
 	w.cache = append(w.cache, msg)
 
-	operation := bucket.MetricOperation{"cache", "add", msg.Topic}
+	operation := bucket.NewMetricOperation("cache", "add", msg.Topic)
 	w.statsClient.TrackOperation(statsWorkerSection, operation, nil, true)
 
 	return nil
@@ -134,7 +135,7 @@ func (w *BridgeWorker) populateCacheFromStorage() {
 			break
 		}
 
-		operation := bucket.MetricOperation{"storage", "get"}
+		operation := bucket.NewMetricOperation("storage", "get")
 		storageMsg, err := w.storage.Get()
 		if err != nil {
 			if err == storage.ErrStorageIsEmpty {
@@ -148,7 +149,7 @@ func (w *BridgeWorker) populateCacheFromStorage() {
 		w.statsClient.TrackOperation(statsWorkerSection, operation, nil, true)
 		errorsCount = 0
 
-		operation = bucket.MetricOperation{"storage", "unmarshal"}
+		operation = bucket.NewMetricOperation("storage", "unmarshal")
 		var msg *producer.Message
 		err = json.Unmarshal(storageMsg, &msg)
 		if err != nil {
@@ -186,7 +187,7 @@ func (w *BridgeWorker) publishMessages(messages []*producer.Message) {
 func (w *BridgeWorker) storeMessage(msg *producer.Message) error {
 	data, err := json.Marshal(msg)
 
-	operation := bucket.MetricOperation{"storage", "marshal"}
+	operation := bucket.NewMetricOperation("storage", "marshal")
 	w.statsClient.TrackOperation(statsWorkerSection, operation, nil, err == nil)
 
 	if err != nil {
@@ -197,7 +198,7 @@ func (w *BridgeWorker) storeMessage(msg *producer.Message) error {
 
 	err = w.storage.Put(data)
 
-	operation = bucket.MetricOperation{"storage", "set"}
+	operation = bucket.NewMetricOperation("storage", "set")
 	w.statsClient.TrackOperation(statsWorkerSection, operation, nil, err == nil)
 
 	if err != nil {

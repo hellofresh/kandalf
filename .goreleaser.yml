@@ -27,8 +27,8 @@ dockers:
     binaries:
       - kandalf
     image_templates:
-      - "hellofreshtech/kandalf:latest"
-      - "hellofreshtech/kandalf:{{.Tag}}"
+      - "hellofresh/kandalf:latest"
+      - "hellofresh/kandalf:{{.Tag}}"
     dockerfile: Dockerfile
     extra_files:
       - assets/pipes.yml

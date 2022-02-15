@@ -7,3 +7,4 @@ plugins:
 nav:
   - Home: "index.md"
   - Configuration: "configuring.md"
+  - How to guidelines: "how-to.md"

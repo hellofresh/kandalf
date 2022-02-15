@@ -4,8 +4,6 @@ title: Configuration
 description: Documentation for Application Configuration
 ---
 
-# Configuration
-
 ## Application configuration
 
 Application is configured with environment variables or config files of different formats - JSON, TOML, YAML, HCL, and Java properties.
@@ -54,7 +52,7 @@ worker:
   storageMaxErrors: 10                              # same as env WORKER_STORAGE_MAX_ERRORS
 ```
 
-You can find sample config file in [assets/config.yml](./assets/config.yml).
+You can find sample config file in [assets/config.yml](https://github.com/hellofresh/kandalf/blob/master/assets/config.yml).
 
 ### Pipes configuration
 
@@ -70,4 +68,4 @@ The rules, defining which messages should be send to which Kafka topics, are def
   rabbitAutoDeleteQueue: false                         # determines if the queue should be declared as auto-delete
 ```
 
-You can find sample Kafka Pipes Config file in [assets/pipes.yml](./assets/pipes.yml).
+You can find sample Kafka Pipes Config file in [assets/pipes.yml](https://github.com/hellofresh/kandalf/blob/master/assets/pipes.yml).

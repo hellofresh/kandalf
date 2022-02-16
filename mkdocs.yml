@@ -1,0 +1,10 @@
+site_name: "Kandalf"
+site_description: "Main documentation and guide for Kandalf"
+
+plugins:
+  - techdocs-core
+
+nav:
+  - Home: "index.md"
+  - Configuration: "configuring.md"
+  - How to guidelines: "how-to.md"

@@ -56,7 +56,7 @@ You can find sample config file in [assets/config.yml](https://github.com/hellof
 
 ### Pipes configuration
 
-The rules, defining which messages should be send to which Kafka topics, are defined in Kafka Pipes Config file and are called "pipes". Each pipe has the following structure:
+"Pipes" are the rules, defining which messages should be send to which Kafka topics. Pipes are defined in Kafka Pipes Config file. Each pipe has the following structure:
 
 ```yaml
 - kafkaTopic: "loyalty"                                # name of the topic in Kafka where message will be sent

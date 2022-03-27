@@ -9,11 +9,11 @@ require (
 	github.com/hellofresh/logging-go v0.4.0
 	github.com/hellofresh/stats-go v1.1.1
 	github.com/kelseyhightower/envconfig v1.4.0
+	github.com/rabbitmq/amqp091-go v1.3.0
 	github.com/rafaeljusto/redigomock v0.0.0-20170720131524-7ae0511314e9
 	github.com/sirupsen/logrus v1.8.1
-	github.com/spf13/cobra v1.2.1
+	github.com/spf13/cobra v1.4.0
 	github.com/spf13/viper v1.9.0
-	github.com/streadway/amqp v1.0.0
 	github.com/stretchr/testify v1.7.0
 )
 

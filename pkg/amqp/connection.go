@@ -3,8 +3,8 @@ package amqp
 import (
 	"time"
 
+	amqp "github.com/rabbitmq/amqp091-go"
 	log "github.com/sirupsen/logrus"
-	"github.com/streadway/amqp"
 )
 
 // InitQueuesHandler is a handler function type for AMQP connection

@@ -3,8 +3,8 @@ package amqp
 import (
 	"github.com/hellofresh/stats-go/bucket"
 	"github.com/hellofresh/stats-go/client"
+	amqp "github.com/rabbitmq/amqp091-go"
 	log "github.com/sirupsen/logrus"
-	"github.com/streadway/amqp"
 
 	"github.com/hellofresh/kandalf/pkg/config"
 )

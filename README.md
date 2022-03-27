@@ -44,6 +44,7 @@ By default it tries to read config file from `/etc/kandalf/conf/config.<ext>` an
 * `KAFKA_PIPES_CONFIG` - Path to RabbitMQ-Kafka bridge mappings config, see details below (_default_: `/etc/kandalf/conf/pipes.yml`)
 * `STATS_DSN` - Stats host, see [hellofresh/stats-go](https://github.com/hellofresh/stats-go#usage) for usage details.
 * `STATS_PREFIX` - Stats prefix, see [hellofresh/stats-go](https://github.com/hellofresh/stats-go#usage) for usage details.
+* `STATS_PORT` - Stats port, used only for `prometheus` metrics, metrics are exposed on `localhost:<port>/metrics` (_default_: `8080`).
 * `WORKER_CYCLE_TIMEOUT` - Main application bridge worker cycle timeout to avoid CPU overload, must be valid [duration string](https://golang.org/pkg/time/#ParseDuration) (_default_: `2s`)
 * `WORKER_CACHE_SIZE` - Max messages number that we store in memory before trying to publish to Kafka (_default_: `10`)
 * `WORKER_CACHE_FLUSH_TIMEOUT` - Max amount of time we store messages in memory before trying to publish to Kafka, must be valid [duration string](https://golang.org/pkg/time/#ParseDuration) (_default_: `5s`)

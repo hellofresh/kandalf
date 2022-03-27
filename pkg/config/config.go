@@ -57,6 +57,7 @@ type KafkaConfig struct {
 type StatsConfig struct {
 	DSN           string `envconfig:"STATS_DSN"`
 	ErrorsSection string `envconfig:"STATS_ERRORS_SECTION"`
+	Port          int    `envconfig:"STATS_PORT"`
 }
 
 // WorkerConfig contains application configuration values for actual bridge worker
@@ -86,6 +87,7 @@ func init() {
 	viper.SetDefault("worker.storageMaxErrors", 10)
 	viper.SetDefault("stats.dsn", "log://")
 	viper.SetDefault("stats.errorsSection", "error-log")
+	viper.SetDefault("stats.port", "8080")
 
 	logging.InitDefaults(viper.GetViper(), "log")
 }

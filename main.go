@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"log"
 
 	"github.com/spf13/cobra"
@@ -22,13 +23,12 @@ func main() {
 
 Complete documentation is available at https://github.com/hellofresh/kandalf`,
 		RunE: func(c *cobra.Command, args []string) error {
-			return cmd.RunApp(version, configPath)
+			return cmd.RunApp(c.Context(), version, configPath)
 		},
 	}
 	RootCmd.Flags().StringVarP(&configPath, "config", "c", "", "Source of a configuration file")
 
-	err := RootCmd.Execute()
-	if err != nil {
+	if err := RootCmd.ExecuteContext(context.Background()); err != nil {
 		log.Fatal(err)
 	}
 }

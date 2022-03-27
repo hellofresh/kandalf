@@ -1,10 +1,14 @@
 package cmd
 
 import (
+	"context"
 	"fmt"
+	"net/http"
 	"net/url"
 	"os"
+	"os/signal"
 	"path/filepath"
+	"syscall"
 
 	"github.com/hellofresh/stats-go"
 	"github.com/hellofresh/stats-go/bucket"
@@ -21,7 +25,7 @@ import (
 )
 
 // RunApp is main application bootstrap and runner
-func RunApp(version, configPath string) error {
+func RunApp(ctx context.Context, version, configPath string) error {
 	log.WithField("version", version).Info("Kandalf starting...")
 
 	globalConfig, err := config.Load(configPath)
@@ -89,12 +93,12 @@ func RunApp(version, configPath string) error {
 		}
 	}()
 
-	forever := make(chan bool)
+	ctx, cancel := context.WithCancel(ctx)
+	defer cancel()
 
-	worker.Go(forever)
-
-	log.Infof("[*] Waiting for users. To exit press CTRL+C")
-	<-forever
+	go startMetricsServer(statsClient, globalConfig.Stats.Port)
+	worker.Go(ctx)
+	waitProcessShutdown()
 
 	return nil
 }
@@ -125,4 +129,26 @@ func initStatsClient(config config.StatsConfig) (client.Client, error) {
 	statsClient.TrackMetric("app", bucket.NewMetricOperation("init", host, appFile))
 
 	return statsClient, nil
+}
+
+func startMetricsServer(sc client.Client, port int) {
+	http.Handle("/metrics", sc.Handler())
+	if err := http.ListenAndServe(fmt.Sprintf(":%d", port), nil); err != nil {
+		log.WithError(err).Error("Got an error from metrics http server")
+	}
+}
+
+func waitProcessShutdown() {
+	sigChan := make(chan os.Signal, 1)
+	signal.Notify(sigChan, os.Interrupt,
+		syscall.SIGHUP,
+		syscall.SIGINT,
+		syscall.SIGTERM,
+		syscall.SIGQUIT,
+	)
+
+	log.Infof("[*] Waiting for users. To exit press CTRL+C")
+	sig := <-sigChan
+
+	log.WithFields(log.Fields{"sig": sig}).Info("Received sig")
 }

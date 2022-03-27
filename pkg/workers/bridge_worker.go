@@ -1,6 +1,7 @@
 package workers
 
 import (
+	"context"
 	"encoding/json"
 	"errors"
 	"sync"
@@ -67,13 +68,13 @@ func (w *BridgeWorker) Execute() {
 }
 
 // Go runs the service forever in async way in go-routine
-func (w *BridgeWorker) Go(interrupt chan bool) {
+func (w *BridgeWorker) Go(ctx context.Context) {
 	w.readStorageTicker = time.NewTicker(w.config.StorageReadTimeout)
 
 	go func() {
 		for {
 			select {
-			case <-interrupt:
+			case <-ctx.Done():
 				return
 			case <-w.readStorageTicker.C:
 				w.populateCacheFromStorage()

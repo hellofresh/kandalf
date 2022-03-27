@@ -4,13 +4,13 @@ go 1.17
 
 require (
 	github.com/Shopify/sarama v1.29.1
-	github.com/garyburd/redigo v1.6.2
 	github.com/gofrs/uuid v4.0.0+incompatible
+	github.com/gomodule/redigo v1.8.8
 	github.com/hellofresh/logging-go v0.4.0
 	github.com/hellofresh/stats-go v1.1.1
 	github.com/kelseyhightower/envconfig v1.4.0
 	github.com/rabbitmq/amqp091-go v1.3.0
-	github.com/rafaeljusto/redigomock v0.0.0-20170720131524-7ae0511314e9
+	github.com/rafaeljusto/redigomock/v3 v3.0.1
 	github.com/sirupsen/logrus v1.8.1
 	github.com/spf13/cobra v1.4.0
 	github.com/spf13/viper v1.9.0

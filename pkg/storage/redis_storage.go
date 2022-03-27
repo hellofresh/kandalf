@@ -4,7 +4,7 @@ import (
 	"net/url"
 	"time"
 
-	"github.com/garyburd/redigo/redis"
+	"github.com/gomodule/redigo/redis"
 )
 
 // RedisStorage is a PersistentStorage interface implementation for Redis DB

@@ -23,6 +23,7 @@ func assertConfig(t *testing.T, globalConfig *GlobalConfig) {
 
 	assert.Equal(t, "statsd://statsd.local:8125/kandalf", globalConfig.Stats.DSN)
 	assert.Equal(t, "error-log", globalConfig.Stats.ErrorsSection)
+	assert.Equal(t, 8080, globalConfig.Stats.Port)
 
 	assert.Equal(t, "2s", globalConfig.Worker.CycleTimeout.String())
 	assert.Equal(t, 10, globalConfig.Worker.CacheSize)

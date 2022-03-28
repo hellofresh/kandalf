@@ -5,7 +5,7 @@ import (
 	"testing"
 
 	"github.com/gofrs/uuid"
-	"github.com/rafaeljusto/redigomock"
+	"github.com/rafaeljusto/redigomock/v3"
 	"github.com/stretchr/testify/assert"
 )
 

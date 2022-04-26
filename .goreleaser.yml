@@ -1,3 +1,4 @@
+---
 project_name: kandalf
 
 builds:
@@ -16,16 +17,14 @@ builds:
       - amd64
       - arm
       - arm64
-      - 386
+      - "386"
     ignore:
       - goos: darwin
-        goarch: 386
+        goarch: "386"
 
 dockers:
   - goos: linux
     goarch: amd64
-    binaries:
-      - kandalf
     image_templates:
       - "hellofresh/kandalf:latest"
       - "hellofresh/kandalf:{{.Tag}}"

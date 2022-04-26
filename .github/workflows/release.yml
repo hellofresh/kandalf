@@ -1,3 +1,4 @@
+---
 name: Release
 
 on:
@@ -8,6 +9,7 @@ on:
 jobs:
   goreleaser:
     runs-on: ubuntu-latest
+    timeout-minutes: 15
 
     steps:
       - name: Check out code
